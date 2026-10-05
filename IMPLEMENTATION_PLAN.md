@@ -45,13 +45,16 @@ This roadmap governs the end-to-end development of the **Predictive Forest Fire 
 
 ---
 
-### Phase 4: Data Ingestion & Preprocessing Pipeline
-- **Objectives**: Implement automated adapters for satellite, meteorological, vegetation, and terrain datasets, normalizing all inputs to a 500m × 500m common spatial grid.
+### Phase 4: Data Ingestion & Preprocessing Pipeline [COMPLETED]
+- **Objectives**: Implement automated adapters for satellite, meteorological, vegetation, and terrain datasets, normalizing all inputs to a 500m × 500m common spatial grid without temporal leakage.
 - **Deliverables**:
-  - Adapters: NASA/FIRMS (MODIS, VIIRS), IMD/ERA5 weather feeds, Sentinel-2/Landsat vegetation, CartoDEM/SRTM elevation.
-  - Spatial resampler to 500m × 500m grid using Rasterio/GDAL.
-  - Daily temporal compositing and missing data imputation (including Sentinel-1 SAR handling).
-  - Feature engineering: NDVI, NDWI, slope, aspect, and Fire Weather Index (FWI) components.
+  - Source Adapters: NASA MODIS (`ModisFireAdapter`), VIIRS (`ViirsFireAdapter`), ISRO INSAT-3D (`InsatFireAdapter`), ECMWF ERA5 (`Era5WeatherAdapter`), IMD (`ImdWeatherAdapter`), Sentinel-2 (`SentinelVegetationAdapter`), Landsat-8 (`LandsatVegetationAdapter`), ISRO Bhuvan (`BhuvanVegetationAdapter`), NASA SRTM (`SrtmTerrainAdapter`), ISRO CartoDEM (`CartoDemTerrainAdapter`).
+  - Spatial Reference & Grid: Dynamic UTM metric CRS projection discovery (`CrsManager`), regular 500m × 500m cell generator (`GridGenerator`), and R-tree spatial indexing (`SpatialGridIndex`).
+  - Spatial & Temporal Alignment: IDW spatial interpolation (`SpatialAligner`), daily temporal compositing, and strict anti-leakage guards raising `DataLeakageError` on future observations (`TemporalAligner`).
+  - Feature Engineering: Spectral indices (NDVI, NDWI), fuel categorization (`standardize_fuel_class`), continuous cyclical aspect sin/cos, orthogonal U/V wind decomposition, and full Canadian Fire Weather Index equations (`FwiCalculator`).
+  - Missing Data & Auditing: Traceable imputation with flags (`imputed_fields`), out-of-bounds physical clamping, and automated quality reporting (`QualityReport`, `QualityReportWriter`).
+  - Model-Ready Outputs & Provenance: CSV, Parquet, and GeoJSON writers (`DatasetWriter`), reproducible run manifest (`ManifestBuilder`), and deterministic sample datasets for Uttarakhand/Garhwal.
+  - End-to-end CLI & Test Suite: Command-line runner (`services.data_pipeline.cli`), 22 comprehensive pipeline tests (60/60 total monorepo tests passing).
 
 ---
 

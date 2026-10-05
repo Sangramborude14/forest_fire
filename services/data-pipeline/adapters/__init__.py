@@ -14,6 +14,10 @@ from .sample_adapters import (
     SampleSentinelVegetationAdapter,
     SampleCartoDemTerrainAdapter,
 )
+from .fire import ModisFireAdapter, ViirsFireAdapter, InsatFireAdapter
+from .weather import Era5WeatherAdapter, ImdWeatherAdapter
+from .vegetation import SentinelVegetationAdapter, LandsatVegetationAdapter, BhuvanVegetationAdapter
+from .terrain import SrtmTerrainAdapter, CartoDemTerrainAdapter
 
 __all__ = [
     "BoundingBox",
@@ -26,4 +30,14 @@ __all__ = [
     "SampleImdWeatherAdapter",
     "SampleSentinelVegetationAdapter",
     "SampleCartoDemTerrainAdapter",
+    "ModisFireAdapter",
+    "ViirsFireAdapter",
+    "InsatFireAdapter",
+    "Era5WeatherAdapter",
+    "ImdWeatherAdapter",
+    "SentinelVegetationAdapter",
+    "LandsatVegetationAdapter",
+    "BhuvanVegetationAdapter",
+    "SrtmTerrainAdapter",
+    "CartoDemTerrainAdapter",
 ]
