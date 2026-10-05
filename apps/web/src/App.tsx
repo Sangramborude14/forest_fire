@@ -1,36 +1,81 @@
 import React, { useState } from 'react';
-import { MainLayout } from './layouts/MainLayout';
-import { NavTab } from './components/Sidebar';
+import { AppLayout } from './layouts/AppLayout';
+import { NavTab } from './components/layout/Navigation';
 import { OverviewPage } from './pages/OverviewPage';
 import { FireRiskPage } from './pages/FireRiskPage';
-import { SimulationPage } from './pages/SimulationPage';
 import { ActiveFiresPage } from './pages/ActiveFiresPage';
+import { SimulationPage } from './pages/SimulationPage';
 import { LayersPage } from './pages/LayersPage';
+import { NotFoundPage } from './pages/NotFoundPage';
+import { useRegions } from './features/regions/hooks/useRegions';
 
 export const App: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<NavTab>('overview');
+  const {
+    regions,
+    selectedRegionId,
+    setSelectedRegionId,
+    selectedRegion,
+    boundary,
+    isLoading: isLoadingRegions,
+  } = useRegions();
 
   const renderActivePage = () => {
     switch (currentTab) {
       case 'overview':
-        return <OverviewPage />;
+        return (
+          <OverviewPage
+            regions={regions}
+            selectedRegion={selectedRegion}
+            boundary={boundary}
+            onNavigateTab={setCurrentTab}
+          />
+        );
       case 'risk':
-        return <FireRiskPage />;
-      case 'simulation':
-        return <SimulationPage />;
+        return (
+          <FireRiskPage
+            selectedRegion={selectedRegion}
+            boundary={boundary}
+          />
+        );
       case 'active_fires':
-        return <ActiveFiresPage />;
+        return (
+          <ActiveFiresPage
+            selectedRegion={selectedRegion}
+            boundary={boundary}
+          />
+        );
+      case 'simulation':
+        return (
+          <SimulationPage
+            selectedRegion={selectedRegion}
+            boundary={boundary}
+          />
+        );
       case 'layers':
-        return <LayersPage />;
+        return (
+          <LayersPage
+            selectedRegion={selectedRegion}
+            boundary={boundary}
+          />
+        );
       default:
-        return <OverviewPage />;
+        return <NotFoundPage onReturnHome={() => setCurrentTab('overview')} />;
     }
   };
 
   return (
-    <MainLayout currentTab={currentTab} onSelectTab={setCurrentTab}>
+    <AppLayout
+      currentTab={currentTab}
+      onSelectTab={setCurrentTab}
+      regions={regions}
+      selectedRegionId={selectedRegionId}
+      onSelectRegion={setSelectedRegionId}
+      isLoadingRegions={isLoadingRegions}
+      selectedRegion={selectedRegion}
+    >
       {renderActivePage()}
-    </MainLayout>
+    </AppLayout>
   );
 };
 

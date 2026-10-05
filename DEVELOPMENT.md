@@ -149,15 +149,30 @@ pytest services/spread-engine/tests -v
 
 ### 5.2 Frontend Automated Tests & Build
 
+The frontend uses Vitest with React Testing Library and JSDOM for component and integration testing:
+
 ```bash
 cd apps/web
 
-# Run frontend tests
+# Run all 25 frontend tests across all feature modules
 npm test
 
-# Verify production build compilation
+# Verify TypeScript typechecking and production Vite build
 npm run build
+
+# Preview production build locally
+npm run preview
 ```
+
+### 5.3 Frontend Feature Architecture
+The frontend codebase in `apps/web/src` is organized into domain-specific features:
+- `features/map/`: Leaflet GIS container, TileLayer providers, MapControls, LayerControls, and MapLegend.
+- `features/regions/`: Monitored region selector and boundary rendering.
+- `features/fire/`: Satellite thermal detections list, animated pulse markers, and FRP telemetry details.
+- `features/risk/`: 24-hour fire risk susceptibility choropleth (500m cells) and cell inspection.
+- `features/simulation/`: 12-hour Cellular Automata ignition placement, duration slider, and timeline scrubber.
+- `features/layers/`: Environmental and terrain raster catalogue (distinguishing active vs upcoming pipelines).
+- `services/api/`: Centralized HTTP client parsing RFC 7807 problem details with typed contracts.
 
 ---
 

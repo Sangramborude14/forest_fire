@@ -29,14 +29,19 @@ This roadmap governs the end-to-end development of the **Predictive Forest Fire 
 
 ---
 
-### Phase 3: Frontend & GIS Foundation
-- **Objectives**: Build high-performance interactive GIS client using React, Leaflet/Mapbox GL JS, and Tailwind CSS.
+### Phase 3: Frontend & GIS Foundation [COMPLETED]
+- **Objectives**: Build high-performance interactive GIS client using React, Leaflet, Tailwind CSS, and feature-driven architecture.
 - **Deliverables**:
-  - Interactive map container supporting vector tile layers, raster overlays, and GeoJSON boundaries.
-  - Region selection and viewport navigation.
-  - Map controls: zoom, layer toggles, legend display, coordinate inspector.
-  - Active fire hotspot marker rendering with popup telemetry (FRP, brightness temperature).
-  - Responsive layout for operational command centers.
+  - Modular feature architecture (`src/features/map`, `risk`, `fire`, `simulation`, `regions`, `layers`, `dashboard`).
+  - Interactive Leaflet GIS map with Basemap switcher (Dark Matter, Satellite, OSM), MapControls, LayerControls, and MapLegend.
+  - Monitored region selector integrated with backend (`/api/v1/regions`, `/api/v1/regions/{id}/boundary`) with automatic viewport centering.
+  - Active satellite fire hotspots visualization (`/api/v1/fires/active`) with animated pulse markers, FRP telemetry popups, and list-map bidirectional selection.
+  - 24-hour risk susceptibility visualization (`/api/v1/risk/{region_id}`) with 500m grid cell inspection and regional summary distributions.
+  - 12-hour Cellular Automata simulation interface with map-click ignition point selection, duration scrub slider, and 0-12h timeline playback controls.
+  - Environmental layers catalog (`/api/v1/layers`) distinguishing operational layers from upcoming Phase 4 pipelines.
+  - Typed central API client layer with RFC 7807 problem details parsing and timeout management.
+  - Comprehensive unit and integration test suite (25/25 tests passing in Vitest).
+
 
 ---
 

@@ -1,9 +1,39 @@
 import React, { useState } from 'react';
-import { MapContainer } from '../features/map/MapContainer';
+import { MapContainer } from '../features/map/components/MapContainer';
+import { RegionLayer } from '../features/map/components/RegionLayer';
+import { RiskLayer } from '../features/map/components/RiskLayer';
+import { MapControls } from '../features/map/components/MapControls';
+import { LayerControls } from '../features/map/components/LayerControls';
+import { RiskLegend } from '../features/risk/components/RiskLegend';
+import { RiskSummaryCard } from '../features/risk/components/RiskSummaryCard';
+import { RiskCellInspector } from '../features/risk/components/RiskCellInspector';
+import { useRisk } from '../features/risk/hooks/useRisk';
+import { RegionSummary, RiskPredictionProperties } from '../types/domain';
+import { GeoJSONFeature, PolygonGeometry, MultiPolygonGeometry } from '../types/geo';
+import { LoadingSpinner } from '../components/feedback/LoadingSpinner';
+import { ErrorAlert } from '../components/feedback/ErrorAlert';
 
-export const FireRiskPage: React.FC = () => {
-  const [selectedRisk, setSelectedRisk] = useState<string>('ALL');
+export interface FireRiskPageProps {
+  selectedRegion: RegionSummary | null;
+  boundary: GeoJSONFeature<PolygonGeometry | MultiPolygonGeometry, RegionSummary> | null;
+}
+
+export const FireRiskPage: React.FC<FireRiskPageProps> = ({
+  selectedRegion,
+  boundary,
+}) => {
   const [forecastDate, setForecastDate] = useState<string>('2026-10-06');
+  const {
+    riskData,
+    summary,
+    selectedCell,
+    setSelectedCell,
+    selectedClassFilter,
+    setSelectedClassFilter,
+    isLoading,
+    error,
+    reload,
+  } = useRisk(selectedRegion?.id, forecastDate);
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden relative">
@@ -15,7 +45,7 @@ export const FireRiskPage: React.FC = () => {
             type="date"
             value={forecastDate}
             onChange={(e) => setForecastDate(e.target.value)}
-            className="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-slate-200 text-xs focus:ring-0"
+            className="bg-slate-800 border border-slate-700 rounded px-2.5 py-1 text-slate-200 font-mono text-xs focus:ring-1 focus:ring-amber-500"
           />
         </div>
 
@@ -24,10 +54,10 @@ export const FireRiskPage: React.FC = () => {
           {['ALL', 'EXTREME', 'HIGH', 'MODERATE', 'LOW'].map((lvl) => (
             <button
               key={lvl}
-              onClick={() => setSelectedRisk(lvl)}
+              onClick={() => setSelectedClassFilter(lvl)}
               className={`px-2.5 py-1 rounded text-[11px] font-semibold transition-colors ${
-                selectedRisk === lvl
-                  ? 'bg-amber-600 text-white'
+                selectedClassFilter === lvl
+                  ? 'bg-amber-600 text-white shadow-sm'
                   : 'bg-slate-800 text-slate-400 hover:text-slate-200'
               }`}
             >
@@ -37,42 +67,52 @@ export const FireRiskPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Map with Risk Layer Overlay */}
+      {/* Main Map Canvas */}
       <div className="flex-1 relative overflow-hidden">
-        <MapContainer activeLayer="risk">
-          {/* Floating Risk Legend Box */}
-          <div className="absolute bottom-10 left-4 z-20 bg-slate-900/95 border border-slate-700/80 rounded-xl p-3 shadow-xl backdrop-blur-md text-xs w-56">
-            <h4 className="font-semibold text-slate-200 mb-2">Susceptibility Scale</h4>
-            <div className="space-y-1.5 font-mono text-[11px]">
-              <div className="flex items-center justify-between">
-                <span className="flex items-center space-x-2">
-                  <span className="w-3 h-3 rounded bg-rose-500" />
-                  <span className="text-slate-300">Extreme</span>
-                </span>
-                <span className="text-slate-400">0.75 - 1.00</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="flex items-center space-x-2">
-                  <span className="w-3 h-3 rounded bg-orange-500" />
-                  <span className="text-slate-300">High</span>
-                </span>
-                <span className="text-slate-400">0.50 - 0.75</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="flex items-center space-x-2">
-                  <span className="w-3 h-3 rounded bg-amber-500" />
-                  <span className="text-slate-300">Moderate</span>
-                </span>
-                <span className="text-slate-400">0.25 - 0.50</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="flex items-center space-x-2">
-                  <span className="w-3 h-3 rounded bg-emerald-500" />
-                  <span className="text-slate-300">Low</span>
-                </span>
-                <span className="text-slate-400">0.00 - 0.25</span>
-              </div>
-            </div>
+        {isLoading && (
+          <div className="absolute inset-0 z-30 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center">
+            <LoadingSpinner label="Loading 500m risk predictions..." />
+          </div>
+        )}
+
+        {error && (
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 w-full max-w-md px-4">
+            <ErrorAlert
+              title="Risk Prediction Service Unavailable"
+              message={error}
+              onRetry={reload}
+            />
+          </div>
+        )}
+
+        <MapContainer>
+          <RegionLayer boundaryFeature={boundary} />
+          <RiskLayer
+            riskData={riskData}
+            selectedCellId={selectedCell?.cell_id}
+            onSelectCell={(cellProps: RiskPredictionProperties) => setSelectedCell(cellProps)}
+          />
+
+          {/* Floating Controls */}
+          <div className="absolute top-4 right-4 z-[400] flex flex-col space-y-2 pointer-events-auto">
+            <LayerControls />
+            <MapControls />
+          </div>
+
+          {/* Left Floating Info Panels */}
+          <div className="absolute top-4 left-4 z-[400] flex flex-col space-y-3 pointer-events-auto max-w-xs">
+            <RiskSummaryCard summary={summary} isLoading={isLoading} />
+            {selectedCell && (
+              <RiskCellInspector
+                cell={selectedCell}
+                onClose={() => setSelectedCell(null)}
+              />
+            )}
+          </div>
+
+          {/* Bottom Left Legend */}
+          <div className="absolute bottom-6 left-4 z-[400] pointer-events-auto">
+            <RiskLegend />
           </div>
         </MapContainer>
       </div>

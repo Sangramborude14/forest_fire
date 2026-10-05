@@ -1,6 +1,6 @@
 # Predictive Forest Fire Risk & Spread Simulation Platform
 
-[![Phase](https://img.shields.io/badge/Project%20Phase-Phase%202%20Backend%20%26%20PostGIS-green.svg)](IMPLEMENTATION_PLAN.md)
+[![Phase](https://img.shields.io/badge/Project%20Phase-Phase%203%20Frontend%20%26%20GIS-green.svg)](IMPLEMENTATION_PLAN.md)
 [![License](https://img.shields.io/badge/License-Apache%202.0-green.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.11%20%7C%203.14-blue.svg)](DEVELOPMENT.md)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-teal.svg)](services/api)

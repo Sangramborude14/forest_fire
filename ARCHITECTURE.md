@@ -195,9 +195,24 @@ forest-fire-platform/
 
 ### 8. Frontend Architecture
 - **Framework**: React 18, TypeScript (strict mode), Vite for bundling, Tailwind CSS for clean GIS controls.
-- **Mapping Engine**: Leaflet with `react-leaflet` as primary zero-dependency GIS layer; Mapbox GL JS supported via environment variable.
-- **State Management**: React custom hooks and modular feature stores.
-- **GIS Layout Philosophy**: Map-first layout with collapsible control panels, clean risk color ramps (Low: Green, Moderate: Yellow, High: Orange, Extreme: Red), and playback controls for the 12-hour simulation progression.
+- **Mapping Engine**: Leaflet with custom DOM container management and MapContext for high-performance direct vector rendering.
+- **Layer Visual Hierarchy**:
+  1. Base Map (CartoDB Dark Matter / Satellite / OpenStreetMap)
+  2. Terrain & Environmental Raster Catalog (CartoDEM / IMD / Sentinel-2)
+  3. 24-Hour Risk Susceptibility Choropleth (500m Grid Partitions)
+  4. Active Satellite Thermal Hotspot Markers (VIIRS / MODIS)
+  5. Fire Spread Simulation Perimeters & Ignition Point Marker (Cellular Automata)
+  6. Region Boundary Highlight (EPSG:4326)
+  7. Interactive UI Overlay Controls (MapControls, LayerControls, MapLegend, Timeline)
+- **Feature Modularization**:
+  - `features/map/`: Leaflet map lifecycle, tile controllers, GIS layer abstractions, and floating controls.
+  - `features/regions/`: Monitored conservation reserves selector and boundary auto-fit.
+  - `features/risk/`: 24h risk prediction choropleths, 500m cell inspector, and regional distribution cards.
+  - `features/fire/`: Satellite hotspot markers, telemetry popups (FRP, brightness temp), and list-map bidirectional focus.
+  - `features/simulation/`: Interactive map-click ignition selection, duration slider, and 0-12h scrub timeline controls.
+  - `features/layers/`: Environmental and terrain raster catalogue (distinguishing active vs upcoming pipelines).
+  - `features/dashboard/`: Operational metric cards and system health banners.
+- **Typed API Integration**: Centralized HTTP client (`services/api/`) with RFC 7807 problem details parsing, typed contracts matching `DATA_CONTRACTS.md`, and deterministic fallback handling.
 
 ---
 
