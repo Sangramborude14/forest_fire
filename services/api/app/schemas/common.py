@@ -1,7 +1,16 @@
-"""Common Pydantic schemas and GeoJSON models."""
+"""Common Pydantic models for errors, health, and pagination."""
 
 from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
+from .geojson import (
+    GeoJSONGeometry,
+    GeoJSONPoint,
+    GeoJSONPolygon,
+    GeoJSONMultiPolygon,
+    GeoJSONFeature,
+    GeoJSONFeatureCollection,
+    to_geojson_geometry,
+)
 
 
 class ErrorDetail(BaseModel):
@@ -13,49 +22,31 @@ class ErrorDetail(BaseModel):
 
 
 class ErrorResponse(BaseModel):
-    """Standardized API error envelope."""
+    """Standardized API error envelope conforming to API_CONTRACT.md."""
     error: ErrorDetail
 
 
 class ServiceStatus(BaseModel):
-    """Service connectivity states."""
+    """Status tracking for backing services."""
     database: str = "connected"
     redis: str = "connected"
     celery_broker: str = "connected"
 
 
 class HealthResponse(BaseModel):
-    """API health response payload."""
+    """API health check response model."""
     status: str = "healthy"
-    timestamp: str
+    service: str = "forest-fire-api"
     version: str
     environment: str
+    timestamp: str
+    database: str = "healthy"
     services: ServiceStatus
 
 
-# GeoJSON Schemas
-class GeoJSONPoint(BaseModel):
-    """GeoJSON Point geometry."""
-    type: str = "Point"
-    coordinates: List[float] = Field(..., description="[longitude, latitude]")
-
-
-class GeoJSONPolygon(BaseModel):
-    """GeoJSON Polygon geometry."""
-    type: str = "Polygon"
-    coordinates: List[List[List[float]]] = Field(..., description="Ring coordinate arrays")
-
-
-class GeoJSONFeature(BaseModel):
-    """GeoJSON Feature envelope."""
-    type: str = "Feature"
-    id: Optional[str] = None
-    geometry: Dict[str, Any]
-    properties: Dict[str, Any] = Field(default_factory=dict)
-
-
-class GeoJSONFeatureCollection(BaseModel):
-    """GeoJSON FeatureCollection."""
-    type: str = "FeatureCollection"
-    features: List[GeoJSONFeature]
-    properties: Optional[Dict[str, Any]] = None
+class PaginationMeta(BaseModel):
+    """Pagination metadata model."""
+    total: int
+    limit: int
+    offset: int
+    has_more: bool

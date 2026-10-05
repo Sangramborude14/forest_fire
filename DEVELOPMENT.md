@@ -163,14 +163,40 @@ npm run build
 
 ## 6. Database & Migration Workflow
 
-### 6.1 Initialize PostGIS Schema
+### 6.1 Alembic Database Migrations
+PostGIS spatial schema migrations are managed via Alembic:
+
+```bash
+source .venv/bin/activate
+
+# Check current revision
+alembic current
+
+# Run all migrations up to head (creates all 7 PostGIS tables and GIST indexes)
+alembic upgrade head
+
+# Rollback one migration revision
+alembic downgrade -1
+```
+
+### 6.2 Programmatic Database Seeding
+To populate the database with reference Indian forest regions (Uttarakhand, Similipal, Bandipur) and initial baseline grid cells:
+
+```bash
+source .venv/bin/activate
+
+# Execute Python database seed script
+python -m services.api.app.seed
+```
+
+### 6.3 Manual SQL Schema Execution (Alternative)
 To manually execute the schema on an active PostgreSQL database:
 
 ```bash
 psql -h localhost -U postgres -d forest_fire_db -f database/schema/initial_schema.sql
 ```
 
-### 6.2 Seed Sample Regions
+### 6.4 Manual SQL Seed (Alternative)
 ```bash
 psql -h localhost -U postgres -d forest_fire_db -f database/seed/sample_seed.sql
 ```

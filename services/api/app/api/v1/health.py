@@ -20,15 +20,20 @@ async def get_health() -> HealthResponse:
     """
     Verify API service operational status, software version, environment,
     and connectivity to backing infrastructure (PostGIS, Redis, Celery).
+    Distinguishes application operational status from dependency health.
     """
     db_status = check_db_connection()
     celery_status = check_celery_broker()
 
+    overall_db = "healthy" if db_status == "connected" else ("unhealthy" if db_status == "unreachable" else "not_configured")
+
     return HealthResponse(
         status="healthy",
-        timestamp=datetime.now(timezone.utc).isoformat(),
+        service=settings.APP_NAME,
         version=settings.APP_VERSION,
         environment=settings.APP_ENV,
+        timestamp=datetime.now(timezone.utc).isoformat(),
+        database=overall_db,
         services=ServiceStatus(
             database=db_status,
             redis=celery_status,

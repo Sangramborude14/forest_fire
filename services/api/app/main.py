@@ -1,17 +1,17 @@
 """FastAPI Application entrypoint."""
 
-import uuid
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from .core.config import settings
 from .core.logging import logger
+from .core.middleware import RequestContextMiddleware
+from .core.exceptions import ForestFireAppException
 from .core.errors import (
-    ForestFireAppException,
     custom_app_exception_handler,
     validation_exception_handler,
     http_exception_handler,
@@ -39,13 +39,7 @@ app = FastAPI(
 )
 
 # Request ID & Logging Middleware
-@app.middleware("http")
-async def request_context_middleware(request: Request, call_next):
-    request_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))
-    request.state.request_id = request_id
-    response = await call_next(request)
-    response.headers["X-Request-ID"] = request_id
-    return response
+app.add_middleware(RequestContextMiddleware)
 
 # CORS Middleware
 app.add_middleware(
@@ -62,7 +56,7 @@ app.add_exception_handler(RequestValidationError, validation_exception_handler)
 app.add_exception_handler(StarletteHTTPException, http_exception_handler)
 app.add_exception_handler(Exception, general_exception_handler)
 
-# Register API Routers
+# Register API Routers under /api/v1
 app.include_router(api_v1_router, prefix=settings.API_V1_PREFIX)
 
 
@@ -74,5 +68,6 @@ async def root():
         "version": settings.APP_VERSION,
         "status": "online",
         "docs_url": "/docs",
+        "redoc_url": "/redoc",
         "api_v1_prefix": settings.API_V1_PREFIX,
     }

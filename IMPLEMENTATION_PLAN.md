@@ -4,7 +4,7 @@ This roadmap governs the end-to-end development of the **Predictive Forest Fire 
 
 ---
 
-### Phase 1: Architecture, Project Foundation & Development Setup [CURRENT PHASE]
+### Phase 1: Architecture, Project Foundation & Development Setup [COMPLETED]
 - **Objectives**: Establish modular monorepo architecture, formal documentation, typed API and data contracts, PostGIS database schema, React shell, FastAPI skeleton, Celery configuration, Docker Compose environment, and automated test foundation.
 - **Deliverables**:
   - `ARCHITECTURE.md`, `API_CONTRACT.md`, `DATA_CONTRACTS.md`, `DATABASE_SCHEMA.md`, `DEVELOPMENT.md`, `IMPLEMENTATION_PLAN.md`.
@@ -17,14 +17,15 @@ This roadmap governs the end-to-end development of the **Predictive Forest Fire 
 
 ---
 
-### Phase 2: Backend, Database & API Implementation
+### Phase 2: Backend, Database & API Implementation [COMPLETED]
 - **Objectives**: Implement full relational data models, SQLAlchemy / GeoAlchemy2 integration, repositories, service layer, and concrete REST endpoints.
 - **Deliverables**:
   - Region querying and spatial bounding endpoints (`/api/v1/regions`).
   - Active fire hotspots ingestion and querying endpoints (`/api/v1/fires/active`).
   - Simulation job submission and lifecycle tracking endpoints (`/api/v1/simulations`).
-  - Alembic migrations and database connection pooling.
-  - RFC-compliant error handlers and response serialization.
+  - 24-hour risk prediction endpoints and GIS layer metadata (`/api/v1/risk`, `/api/v1/layers`).
+  - Alembic migrations (`0001_initial_postgis_schema.py`) and programmatic database seeding (`python -m services.api.app.seed`).
+  - RFC 7807-compliant error handlers, `X-Request-ID` tracing, and GeoJSON spatial response serialization.
 
 ---
 
