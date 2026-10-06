@@ -75,11 +75,28 @@ export const RiskCellInspector: React.FC<RiskCellInspectorProps> = ({
           <span className="text-slate-400">Fuel Classification:</span>
           <span>{cell.fuel_type || 'Not available'}</span>
         </div>
-        <div className="flex justify-between items-center py-1">
+        <div className="flex justify-between items-center py-1 border-b border-slate-800/60">
           <span className="text-slate-400">Model Pipeline:</span>
-          <span className="text-slate-500">{cell.model_version || 'Baseline Contract'}</span>
+          <span className="text-slate-400 font-semibold">{cell.model_version || 'risk-xgboost-v001'}</span>
         </div>
+        {cell.forecast_start && cell.forecast_end && (
+          <div className="flex justify-between items-center py-1 border-b border-slate-800/60">
+            <span className="text-slate-400">Forecast Window:</span>
+            <span className="text-[10px] text-slate-300">
+              {cell.forecast_start.slice(0, 10)} (24h)
+            </span>
+          </div>
+        )}
+        {cell.prediction_timestamp && (
+          <div className="flex justify-between items-center py-1">
+            <span className="text-slate-400">Generated:</span>
+            <span className="text-[10px] text-slate-400">
+              {new Date(cell.prediction_timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </span>
+          </div>
+        )}
       </div>
+
 
       <div className="mt-3.5 pt-2.5 border-t border-slate-800 flex justify-end">
         <Button variant="secondary" size="sm" onClick={onClose}>

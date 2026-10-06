@@ -39,6 +39,8 @@ class Settings(BaseSettings):
 
     # Domain defaults
     DEFAULT_GRID_RESOLUTION_METERS: int = 500
+    DEFAULT_RISK_MODEL_VERSION: str = "risk-xgboost-v001"
+    PROCESSED_DATA_DIR: str = "data/processed"
 
     @property
     def cors_origin_list(self) -> List[str]:

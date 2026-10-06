@@ -59,16 +59,24 @@ export interface FireEventDetail extends FireHotspotProperties {
 // --- 24h Risk Prediction ---
 export interface RiskPredictionProperties {
   cell_id: string;
+  grid_cell_id?: string;
   risk_probability: number;
   risk_class: RiskClass;
   fwi_index?: number | null;
+  fwi?: number | null;
   elevation?: number | null;
+  elevation_m?: number | null;
   slope?: number | null;
+  slope_deg?: number | null;
   aspect?: number | null;
   fuel_type?: string | null;
   model_version?: string;
   target_date?: string;
+  forecast_start?: string;
+  forecast_end?: string;
+  prediction_timestamp?: string;
 }
+
 
 export interface RiskSummary {
   region_id: string;

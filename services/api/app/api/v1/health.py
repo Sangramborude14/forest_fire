@@ -7,6 +7,8 @@ from ...core.database import check_db_connection
 from ...core.celery_app import check_celery_broker
 from ...schemas.common import HealthResponse, ServiceStatus
 
+from ...core.model_manager import risk_model_manager
+
 router = APIRouter(tags=["Health"])
 
 
@@ -24,6 +26,10 @@ async def get_health() -> HealthResponse:
     """
     db_status = check_db_connection()
     celery_status = check_celery_broker()
+    if not risk_model_manager.is_available:
+        risk_model_manager.load_active_model()
+    model_status = "available" if risk_model_manager.is_available else "unavailable"
+
 
     overall_db = "healthy" if db_status == "connected" else ("unhealthy" if db_status == "unreachable" else "not_configured")
 
@@ -38,5 +44,7 @@ async def get_health() -> HealthResponse:
             database=db_status,
             redis=celery_status,
             celery_broker=celery_status,
+            risk_model=model_status,
         ),
     )
+

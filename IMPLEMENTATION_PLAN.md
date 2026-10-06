@@ -74,13 +74,22 @@ This roadmap governs the end-to-end development of the **Predictive Forest Fire 
 
 ---
 
-### Phase 6: Risk Model Integration (Model -> Backend -> GIS)
-- **Objectives**: Connect the trained 24-hour risk engine to the backend API and render spatial susceptibility layers on the GIS dashboard.
+### Phase 6: 24-Hour Risk Model -> FastAPI -> PostGIS -> GIS [COMPLETED]
+- **Objectives**: Connect the Phase 5 trained 24-hour XGBoost fire risk model to the FastAPI backend, PostGIS spatial persistence layer, and the React GIS dashboard.
 - **Deliverables**:
-  - Celery scheduled task for automated daily risk scoring.
-  - `/api/v1/risk/{region_id}` returning GeoJSON FeatureCollection of 500m cells.
-  - Dynamic risk choropleth layer on frontend (Low: Green, Moderate: Yellow, High: Orange, Extreme: Red).
-  - Cell click inspection displaying environmental precursors and risk probability.
+  - In-Memory Model Manager (`RiskModelManager`) loading and caching active model (`risk-xgboost-v001`) at startup with graceful fallback to `MODEL_UNAVAILABLE` status without crashing the API.
+  - End-to-End Orchestrator (`RiskService`) integrating Phase 4 canonical features, Phase 5 XGBoost vector inference (`RiskPredictor`), PostGIS `risk_predictions` and `grid_cells` persistence, and GeoJSON conversion.
+  - Thin REST Endpoints:
+    - `GET /api/v1/risk/{region_id}` returning GeoJSON FeatureCollection of 500m cells with exact probability, risk class, 24h forecast window, model version, and environmental telemetry.
+    - `GET /api/v1/risk/{region_id}/summary` providing real regional risk distributions (`low`, `moderate`, `high`, `extreme`) and mean probabilities.
+    - `POST /api/v1/risk/predict` triggering synchronous on-demand batch inference with strict idempotency guards (`force_recompute`).
+  - Spatial Persistence & Idempotency: `RiskRepository` supporting spatial joins with `grid_cells`, duplicate prevention on `(grid_cell_id, valid_for_date, model_version)`, and recompute overrides.
+  - Enhanced GIS Frontend:
+    - Real model layer rendered across 2,668 500m spatial cells with threshold styling.
+    - Interactive 500m cell inspector rendering fire probability, risk class badge, FWI rating, elevation, slope, fuel classification, model version, forecast window, and generation timestamp.
+    - Regional summary card powered by live `/summary` endpoint.
+    - "Run Prediction" on-demand trigger button integrated directly into the map controls bar.
+  - Automated Verification: 11 new integration tests in `test_risk_integration.py` (96/96 monorepo backend tests passing, 25/25 frontend tests passing, clean TypeScript build).
 
 ---
 

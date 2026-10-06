@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { fetchRiskPredictions, fetchRiskSummary } from '../../../services/api/risk';
+import { fetchRiskPredictions, fetchRiskSummary, triggerRiskPrediction } from '../../../services/api/risk';
 import { RiskPredictionProperties, RiskSummary } from '../../../types/domain';
+
 import { GeoJSONFeatureCollection, GeoJSONFeature, PolygonGeometry } from '../../../types/geo';
 
 export function useRisk(regionId?: string, targetDate?: string) {
@@ -37,9 +38,27 @@ export function useRisk(regionId?: string, targetDate?: string) {
     }
   }, [regionId, targetDate]);
 
+  const recomputeRisk = useCallback(async () => {
+    if (!regionId) return;
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const dateToUse = targetDate || new Date().toISOString().slice(0, 10);
+      await triggerRiskPrediction(regionId, dateToUse, true);
+      await loadRisk();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to execute risk model inference');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [regionId, targetDate, loadRisk]);
+
   useEffect(() => {
     loadRisk();
   }, [loadRisk]);
+
 
   // Filter features based on risk class
   const filteredFeatures: GeoJSONFeature<PolygonGeometry, RiskPredictionProperties>[] = (
@@ -68,5 +87,7 @@ export function useRisk(regionId?: string, targetDate?: string) {
     isLoading,
     error,
     reload: loadRisk,
+    recomputeRisk,
   };
 }
+

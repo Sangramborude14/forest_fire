@@ -29,3 +29,28 @@ export async function fetchRiskSummary(
   const path = `/risk/${encodeURIComponent(regionId)}/summary${queryString ? `?${queryString}` : ''}`;
   return httpClient.get<RiskSummary>(path);
 }
+
+export interface RiskPredictResponse {
+  job_id: string;
+  region_id: string;
+  target_date: string;
+  status: string;
+  cells_predicted: number;
+  mean_risk_probability: number;
+  completed_at: string;
+  model_version?: string;
+}
+
+export async function triggerRiskPrediction(
+  regionId: string,
+  targetDate: string,
+  forceRecompute: boolean = false
+): Promise<RiskPredictResponse> {
+  return httpClient.post<RiskPredictResponse>('/risk/predict', {
+    region_id: regionId,
+    target_date: targetDate,
+    force_recompute: forceRecompute,
+    model_name: 'risk-xgboost-v001',
+  });
+}
+

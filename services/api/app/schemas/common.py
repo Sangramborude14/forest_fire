@@ -31,6 +31,8 @@ class ServiceStatus(BaseModel):
     database: str = "connected"
     redis: str = "connected"
     celery_broker: str = "connected"
+    risk_model: Optional[str] = "available"
+
 
 
 class HealthResponse(BaseModel):

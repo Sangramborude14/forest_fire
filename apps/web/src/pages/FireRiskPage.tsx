@@ -33,6 +33,7 @@ export const FireRiskPage: React.FC<FireRiskPageProps> = ({
     isLoading,
     error,
     reload,
+    recomputeRisk,
   } = useRisk(selectedRegion?.id, forecastDate);
 
   return (
@@ -47,7 +48,16 @@ export const FireRiskPage: React.FC<FireRiskPageProps> = ({
             onChange={(e) => setForecastDate(e.target.value)}
             className="bg-slate-800 border border-slate-700 rounded px-2.5 py-1 text-slate-200 font-mono text-xs focus:ring-1 focus:ring-amber-500"
           />
+          <button
+            onClick={recomputeRisk}
+            disabled={isLoading || !selectedRegion}
+            className="px-2.5 py-1 rounded bg-amber-600/90 hover:bg-amber-500 text-white font-medium text-[11px] transition-colors disabled:opacity-50 flex items-center space-x-1"
+            title="Trigger XGBoost risk inference"
+          >
+            <span>⚡ Run Prediction</span>
+          </button>
         </div>
+
 
         <div className="flex items-center space-x-2">
           <span className="text-slate-400">Filter Level:</span>

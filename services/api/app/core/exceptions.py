@@ -106,3 +106,26 @@ class NotImplementedException(ForestFireAppException):
             status_code=status.HTTP_501_NOT_IMPLEMENTED,
             details=details
         )
+
+
+class ModelUnavailableException(ForestFireAppException):
+    """Raised when the requested risk prediction machine learning model is unavailable."""
+    def __init__(self, message: str, details: Optional[Dict[str, Any]] = None):
+        super().__init__(
+            message=message,
+            code="MODEL_UNAVAILABLE",
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            details=details
+        )
+
+
+class FeatureDataUnavailableException(ForestFireAppException):
+    """Raised when model-ready environmental observations are missing for a region/date."""
+    def __init__(self, message: str, details: Optional[Dict[str, Any]] = None):
+        super().__init__(
+            message=message,
+            code="DATA_NOT_FOUND",
+            status_code=status.HTTP_404_NOT_FOUND,
+            details=details
+        )
+
