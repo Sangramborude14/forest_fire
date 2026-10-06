@@ -1,7 +1,7 @@
 """Service layer managing static and environmental GIS layers."""
 
-from typing import Dict, Any
-from ..schemas.layers import LayerMetadataResponse
+from typing import Dict, Any, List
+from ..schemas.layers import LayerMetadataResponse, LayerCatalogItem
 from ..core.exceptions import ValidationException
 
 ALLOWED_LAYERS = {
@@ -79,3 +79,28 @@ class LayerService:
             legend=info["legend"],
             source=info["source"],
         )
+
+    def list_layers(self) -> List[LayerCatalogItem]:
+        """Return catalog of available GIS layers."""
+        categories = {
+            "elevation": ("Elevation DEM", "terrain", "CartoDEM 30m Resampled to 500m"),
+            "slope": ("Topographic Slope", "terrain", "Slope gradient derived from CartoDEM"),
+            "fuel": ("Fuel Classification", "vegetation", "ISRO Bhuvan Land Cover fuel models"),
+            "weather": ("Weather Conditions", "weather", "IMD & ERA5 meteorological precursors"),
+            "fire-history": ("Historical Fire Perimeters", "fire", "Historical burn scar frequencies"),
+        }
+        items = []
+        for k, info in ALLOWED_LAYERS.items():
+            name, cat, desc = categories.get(k, (k.title(), "terrain", info["source"]))
+            items.append(
+                LayerCatalogItem(
+                    id=k,
+                    name=name,
+                    category=cat,
+                    description=desc,
+                    source=info["source"],
+                    is_available=True,
+                    resolution=f"{info['resolution_meters']}m",
+                )
+            )
+        return items

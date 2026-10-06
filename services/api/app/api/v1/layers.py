@@ -1,11 +1,23 @@
-"""Static and Environmental Layers API router delegating to LayerService."""
-
+from typing import List
 from fastapi import APIRouter, Path, Query, Depends, status
-from ...schemas.layers import LayerMetadataResponse
+from ...schemas.layers import LayerMetadataResponse, LayerCatalogItem
 from ...services.layer_service import LayerService
 from ...dependencies.services import get_layer_service
 
 router = APIRouter(prefix="/layers", tags=["Layers"])
+
+
+@router.get(
+    "",
+    response_model=List[LayerCatalogItem],
+    status_code=status.HTTP_200_OK,
+    summary="List Environmental GIS Layers Catalog"
+)
+async def list_layers(
+    service: LayerService = Depends(get_layer_service),
+) -> List[LayerCatalogItem]:
+    """Retrieve the full catalog of operational and reference GIS layers."""
+    return service.list_layers()
 
 
 @router.get(

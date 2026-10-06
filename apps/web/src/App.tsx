@@ -8,9 +8,11 @@ import { SimulationPage } from './pages/SimulationPage';
 import { LayersPage } from './pages/LayersPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { useRegions } from './features/regions/hooks/useRegions';
+import { IgnitionPoint } from './types/domain';
 
 export const App: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<NavTab>('overview');
+  const [prefilledIgnition, setPrefilledIgnition] = useState<IgnitionPoint | null>(null);
   const {
     regions,
     selectedRegionId,
@@ -19,6 +21,13 @@ export const App: React.FC = () => {
     boundary,
     isLoading: isLoadingRegions,
   } = useRegions();
+
+  const handleNavigateToSimulation = (ignition?: IgnitionPoint) => {
+    if (ignition) {
+      setPrefilledIgnition(ignition);
+    }
+    setCurrentTab('simulation');
+  };
 
   const renderActivePage = () => {
     switch (currentTab) {
@@ -36,6 +45,7 @@ export const App: React.FC = () => {
           <FireRiskPage
             selectedRegion={selectedRegion}
             boundary={boundary}
+            onNavigateToSimulation={handleNavigateToSimulation}
           />
         );
       case 'active_fires':
@@ -43,6 +53,7 @@ export const App: React.FC = () => {
           <ActiveFiresPage
             selectedRegion={selectedRegion}
             boundary={boundary}
+            onNavigateToSimulation={handleNavigateToSimulation}
           />
         );
       case 'simulation':
@@ -50,6 +61,7 @@ export const App: React.FC = () => {
           <SimulationPage
             selectedRegion={selectedRegion}
             boundary={boundary}
+            initialIgnition={prefilledIgnition}
           />
         );
       case 'layers':

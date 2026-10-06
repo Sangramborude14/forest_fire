@@ -11,3 +11,15 @@ class LayerMetadataResponse(BaseModel):
     resolution_meters: int = 500
     legend: Dict[str, str] = Field(default_factory=dict)
     source: str
+
+
+class LayerCatalogItem(BaseModel):
+    """Metadata for a catalog GIS layer."""
+    id: str
+    name: str
+    category: str
+    description: str
+    source: str
+    is_available: bool = True
+    resolution: str = "500m"
+    legend: Optional[List[Dict[str, str]]] = None

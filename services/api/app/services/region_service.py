@@ -15,6 +15,7 @@ SAMPLE_REGIONS = [
     {
         "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
         "code": "UTTARAKHAND_GARHWAL",
+        "alias": "reg-01",
         "name": "Garhwal Forest Division",
         "state": "Uttarakhand",
         "area_sqkm": 2840.5,
@@ -27,6 +28,7 @@ SAMPLE_REGIONS = [
     {
         "id": "7ca85f64-5717-4562-b3fc-2c963f66afa7",
         "code": "WESTERN_GHATS_WAYANAD",
+        "alias": "reg-02",
         "name": "Wayanad Wildlife Sanctuary",
         "state": "Kerala",
         "area_sqkm": 344.4,
@@ -124,7 +126,7 @@ class RegionService:
 
         # Reference data fallback
         match = next(
-            (r for r in SAMPLE_REGIONS if r["id"] == region_id or r["code"] == region_id),
+            (r for r in SAMPLE_REGIONS if r["id"] == region_id or r["code"] == region_id or r.get("alias") == region_id),
             None,
         )
         if not match:

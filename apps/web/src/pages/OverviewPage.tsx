@@ -1,6 +1,6 @@
 import React from 'react';
 import { MetricGrid } from '../features/dashboard/components/MetricGrid';
-import { SystemStatusBanner } from '../features/dashboard/components/SystemStatusBanner';
+import { OperationalAttentionBanner } from '../features/dashboard/components/OperationalAttentionBanner';
 import { MapContainer } from '../features/map/components/MapContainer';
 import { RegionLayer } from '../features/map/components/RegionLayer';
 import { FireLayer } from '../features/map/components/FireLayer';
@@ -32,18 +32,31 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
 
   const meanRisk = riskSummary?.mean_probability || 0.28;
   const gridCells = riskSummary?.total_cells || 11362;
+  const highRiskCells = riskSummary?.high_risk_cells || 0;
+  const extremeRiskCells = riskSummary?.extreme_risk_cells || 0;
+  const maxRisk = riskSummary?.max_probability || 0;
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-slate-950">
-      {/* Top Metric Summary Ribbon */}
-      <div className="p-4 bg-slate-900/60 border-b border-slate-800 shrink-0 space-y-3">
+      {/* Top Metric Summary Ribbon & Operational Attention */}
+      <div className="p-3.5 bg-slate-900/70 border-b border-slate-800 shrink-0 space-y-2.5">
         <MetricGrid
           regionCount={regions.length}
           activeFireCount={activeFireCount}
           meanRisk={meanRisk}
           gridCells={gridCells}
+          highRiskCount={highRiskCells + extremeRiskCells}
+          maxRisk={maxRisk}
         />
-        <SystemStatusBanner health={null} online={true} />
+        <OperationalAttentionBanner
+          regionName={selectedRegion?.name}
+          activeFireCount={activeFireCount}
+          highRiskCellCount={highRiskCells}
+          extremeRiskCellCount={extremeRiskCells}
+          maxProbability={maxRisk}
+          forecastDate={riskSummary?.target_date}
+          onNavigateTab={onNavigateTab}
+        />
       </div>
 
       {/* Main Interactive Overview GIS Canvas */}
@@ -73,25 +86,36 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
 
           {/* Quick Action Navigation Card */}
           <div className="absolute top-4 left-4 z-[400] bg-slate-900/90 border border-slate-700/80 rounded-xl p-3.5 shadow-xl backdrop-blur-md text-xs pointer-events-auto max-w-xs space-y-2.5">
-            <div className="font-semibold text-slate-100 flex items-center space-x-1.5">
-              <span>📍</span>
-              <span>{selectedRegion?.name || 'Garhwal Western Himalaya'}</span>
+            <div className="font-semibold text-slate-100 flex items-center justify-between">
+              <span className="flex items-center space-x-1.5 truncate">
+                <span>📍</span>
+                <span className="truncate">{selectedRegion?.name || 'Garhwal Western Himalaya'}</span>
+              </span>
+              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">
+                {selectedRegion?.code || 'SECTOR'}
+              </span>
             </div>
             <p className="text-[11px] text-slate-400 leading-relaxed">
-              Active operational sector. 500m normalized grid active with multi-source observation feeds.
+              Operational sector view. 500m grid active with automated satellite thermal hotspot overlay.
             </p>
-            <div className="flex space-x-2 pt-1 border-t border-slate-800">
+            <div className="grid grid-cols-3 gap-1.5 pt-1 border-t border-slate-800">
               <button
                 onClick={() => onNavigateTab('risk')}
-                className="flex-1 px-2.5 py-1.5 rounded-lg bg-amber-600/30 border border-amber-500/50 text-amber-400 font-semibold hover:bg-amber-600/40 text-[11px] transition-colors"
+                className="px-2 py-1.5 rounded-lg bg-amber-600/30 border border-amber-500/50 text-amber-400 font-semibold hover:bg-amber-600/40 text-[10px] transition-colors text-center"
               >
-                Inspect 24h Risk →
+                24h Risk →
+              </button>
+              <button
+                onClick={() => onNavigateTab('active_fires')}
+                className="px-2 py-1.5 rounded-lg bg-rose-600/30 border border-rose-500/50 text-rose-300 font-semibold hover:bg-rose-600/40 text-[10px] transition-colors text-center"
+              >
+                Fires ({activeFireCount}) →
               </button>
               <button
                 onClick={() => onNavigateTab('simulation')}
-                className="flex-1 px-2.5 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 font-semibold hover:bg-slate-700 text-[11px] transition-colors"
+                className="px-2 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 font-semibold hover:bg-slate-700 text-[10px] transition-colors text-center"
               >
-                Simulate Spread →
+                Simulate →
               </button>
             </div>
           </div>

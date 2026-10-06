@@ -89,8 +89,8 @@ export const Navigation: React.FC<NavigationProps> = ({
             <span className="font-mono text-slate-200">EPSG:4326</span>
           </div>
           <div className="flex justify-between">
-            <span>Phase:</span>
-            <span className="font-mono text-amber-400 font-semibold">Phase 3 GIS</span>
+            <span>Operational Mode:</span>
+            <span className="font-mono text-emerald-400 font-semibold">Live GIS</span>
           </div>
         </div>
       ) : (

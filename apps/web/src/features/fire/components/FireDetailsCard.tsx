@@ -6,12 +6,14 @@ import { Button } from '../../../components/ui/Button';
 export interface FireDetailsCardProps {
   fire: FireHotspotProperties | null;
   onClose: () => void;
+  onSimulateFromFire?: (fire: FireHotspotProperties) => void;
   className?: string;
 }
 
 export const FireDetailsCard: React.FC<FireDetailsCardProps> = ({
   fire,
   onClose,
+  onSimulateFromFire,
   className = '',
 }) => {
   if (!fire) return null;
@@ -52,6 +54,14 @@ export const FireDetailsCard: React.FC<FireDetailsCardProps> = ({
           </Badge>
         </div>
         <div className="flex justify-between items-center py-1 border-b border-slate-800/60">
+          <span className="text-slate-400">Coordinates:</span>
+          <span className="text-slate-200">
+            {fire.latitude !== undefined && fire.longitude !== undefined
+              ? `${fire.latitude.toFixed(4)}°N, ${fire.longitude.toFixed(4)}°E`
+              : 'Point geometry'}
+          </span>
+        </div>
+        <div className="flex justify-between items-center py-1 border-b border-slate-800/60">
           <span className="text-slate-400">Fire Radiative Power:</span>
           <span className="font-bold text-amber-400">
             {fire.frp_mw !== null ? `${fire.frp_mw.toFixed(1)} MW` : 'Not available'}
@@ -79,9 +89,19 @@ export const FireDetailsCard: React.FC<FireDetailsCardProps> = ({
         </div>
       </div>
 
-      <div className="mt-4 pt-3 border-t border-slate-800 flex justify-end">
+      <div className="mt-4 pt-3 border-t border-slate-800 flex items-center space-x-2">
+        {onSimulateFromFire && (
+          <Button
+            variant="primary"
+            size="sm"
+            className="flex-1 font-semibold text-[11px]"
+            onClick={() => onSimulateFromFire(fire)}
+          >
+            ⏳ Simulate Spread
+          </Button>
+        )}
         <Button variant="secondary" size="sm" onClick={onClose}>
-          Dismiss Inspector
+          Dismiss
         </Button>
       </div>
     </div>

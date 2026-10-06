@@ -26,6 +26,21 @@ export const LayerManager: React.FC<LayerManagerProps> = ({
     );
   }
 
+  const layerUnits: Record<string, string> = {
+    elevation: 'meters (m)',
+    slope: 'degrees (°)',
+    aspect: 'degrees (°)',
+    weather: 'm/s, °C, %',
+    wind: 'm/s',
+    temperature: '°C',
+    humidity: '%',
+    fwi: 'FWI Index',
+    ndvi: 'NDVI Index [-1, 1]',
+    risk_layer: 'Probability [0.0 - 1.0]',
+    active_fires: 'Radiative Power (MW) / K',
+    simulation: 'Perimeter Hectares (ha)',
+  };
+
   return (
     <div className={`space-y-2.5 overflow-y-auto ${className}`}>
       {layers.map((layer) => {
@@ -39,6 +54,8 @@ export const LayerManager: React.FC<LayerManagerProps> = ({
           vegetation: '🌲',
           simulation: '⏳',
         };
+
+        const unit = layerUnits[layer.id] || (layer.category === 'terrain' ? 'm / °' : null);
 
         return (
           <div
@@ -56,7 +73,7 @@ export const LayerManager: React.FC<LayerManagerProps> = ({
                 <span>{layer.name}</span>
               </span>
               <Badge variant={layer.is_available ? 'success' : 'neutral'} size="sm">
-                {layer.is_available ? 'Active Layer' : 'Upcoming Phase 4'}
+                {layer.is_available ? 'Operational Layer' : 'Upcoming Ingestion Pipeline'}
               </Badge>
             </div>
 
@@ -66,7 +83,10 @@ export const LayerManager: React.FC<LayerManagerProps> = ({
 
             <div className="flex items-center justify-between text-[10px] font-mono text-slate-500 pt-2 border-t border-slate-800/80">
               <span>Source: {layer.source}</span>
-              <span>{layer.resolution || '500m Grid'}</span>
+              <div className="flex items-center space-x-2">
+                {unit && <span className="text-amber-400/90">{unit}</span>}
+                <span>{layer.resolution || '500m Grid'}</span>
+              </div>
             </div>
           </div>
         );

@@ -85,6 +85,25 @@ export const APP_CONFIG = {
       badgeBg: 'bg-rose-500/20 text-rose-400 border-rose-500/30',
     },
   },
+  // Operational Attention & Advisory Levels
+  alertLevels: {
+    INFO: {
+      label: 'Operational Baseline',
+      icon: 'ℹ️',
+      badgeClass: 'bg-sky-500/20 text-sky-400 border-sky-500/30',
+    },
+    WARNING: {
+      label: 'Elevated Activity',
+      icon: '⚠️',
+      badgeClass: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+    },
+    HIGH_ATTENTION: {
+      label: 'High Attention Required',
+      icon: '🚨',
+      badgeClass: 'bg-rose-500/20 text-rose-400 border-rose-500/30',
+    },
+  },
 } as const;
 
 export type RiskLevelKey = keyof typeof APP_CONFIG.riskColors;
+export type AlertLevelKey = keyof typeof APP_CONFIG.alertLevels;

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MapContainer } from '../features/map/components/MapContainer';
 import { RegionLayer } from '../features/map/components/RegionLayer';
 import { SimulationLayer } from '../features/map/components/SimulationLayer';
@@ -8,22 +8,74 @@ import { IgnitionSelector } from '../features/simulation/components/IgnitionSele
 import { SimulationControls } from '../features/simulation/components/SimulationControls';
 import { Timeline } from '../features/simulation/components/Timeline';
 import { SimulationStatus } from '../features/simulation/components/SimulationStatus';
+import { SimulationMetricChart } from '../features/simulation/components/SimulationMetricChart';
 import { useSimulation } from '../features/simulation/hooks/useSimulation';
-import { RegionSummary } from '../types/domain';
+import { RegionSummary, IgnitionPoint } from '../types/domain';
 import { GeoJSONFeature, PolygonGeometry, MultiPolygonGeometry } from '../types/geo';
 import { ErrorAlert } from '../components/feedback/ErrorAlert';
-import { isPointInGeometry } from '../features/map/utils/geoUtils';
+import { isPointInGeometry, getBoundsFromGeoJSON } from '../features/map/utils/geoUtils';
+import { useMapContext } from '../features/map/hooks/useMapContext';
 
 export interface SimulationPageProps {
   selectedRegion: RegionSummary | null;
   boundary: GeoJSONFeature<PolygonGeometry | MultiPolygonGeometry, RegionSummary> | null;
+  initialIgnition?: IgnitionPoint | null;
 }
+
+const SimulationFocusControls: React.FC<{
+  ignitionPoint: IgnitionPoint | null;
+  boundary: GeoJSONFeature<PolygonGeometry | MultiPolygonGeometry, RegionSummary> | null;
+}> = ({ ignitionPoint, boundary }) => {
+  const { map } = useMapContext();
+
+  const handleFocusIgnition = () => {
+    if (map && ignitionPoint) {
+      map.flyTo([ignitionPoint.latitude, ignitionPoint.longitude], 13);
+    }
+  };
+
+  const handleFocusBoundary = () => {
+    if (map && boundary?.geometry) {
+      const bounds = getBoundsFromGeoJSON(boundary.geometry);
+      if (bounds) {
+        map.fitBounds(bounds, { padding: [40, 40] });
+      }
+    }
+  };
+
+  return (
+    <div className="bg-slate-900/95 border border-slate-700/80 rounded-xl shadow-xl backdrop-blur-md p-1 flex flex-col space-y-1">
+      {ignitionPoint && (
+        <button
+          onClick={handleFocusIgnition}
+          className="w-7 h-7 rounded-lg flex items-center justify-center text-[12px] text-slate-300 hover:text-amber-400 hover:bg-slate-800 transition-colors"
+          title="Center on Ignition Point"
+          aria-label="Center on Ignition Point"
+        >
+          📍
+        </button>
+      )}
+      {boundary && (
+        <button
+          onClick={handleFocusBoundary}
+          className="w-7 h-7 rounded-lg flex items-center justify-center text-[12px] text-slate-300 hover:text-sky-400 hover:bg-slate-800 transition-colors"
+          title="Fit Region Boundary"
+          aria-label="Fit Region Boundary"
+        >
+          🗺️
+        </button>
+      )}
+    </div>
+  );
+};
 
 export const SimulationPage: React.FC<SimulationPageProps> = ({
   selectedRegion,
   boundary,
+  initialIgnition,
 }) => {
   const [boundaryWarning, setBoundaryWarning] = useState<string | null>(null);
+  const [sidebarTab, setSidebarTab] = useState<'params' | 'metrics'>('params');
 
   const {
     ignitionPoint,
@@ -52,7 +104,33 @@ export const SimulationPage: React.FC<SimulationPageProps> = ({
     stepForward,
     stepBackward,
     replaySimulation,
-  } = useSimulation(selectedRegion?.id || 'reg-01');
+  } = useSimulation(selectedRegion?.id || 'reg-01', initialIgnition);
+
+  // Global keyboard shortcuts for timeline navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const targetTag = (e.target as HTMLElement)?.tagName;
+      if (['INPUT', 'SELECT', 'TEXTAREA'].includes(targetTag)) {
+        return;
+      }
+
+      if (e.code === 'Space') {
+        e.preventDefault();
+        setIsPlaying((prev) => !prev);
+      } else if (e.code === 'ArrowLeft') {
+        e.preventDefault();
+        stepBackward();
+      } else if (e.code === 'ArrowRight') {
+        e.preventDefault();
+        stepForward();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [setIsPlaying, stepBackward, stepForward]);
 
   const handleMapClick = (lat: number, lng: number) => {
     // Validate if the clicked point is within the selected region boundary
@@ -117,6 +195,7 @@ export const SimulationPage: React.FC<SimulationPageProps> = ({
             <div className="absolute top-4 right-4 z-[400] flex flex-col space-y-2 pointer-events-auto">
               <LayerControls />
               <MapControls />
+              <SimulationFocusControls ignitionPoint={ignitionPoint} boundary={boundary} />
             </div>
 
             {/* Floating 12-Hour Timeline Slider at bottom */}
@@ -135,38 +214,78 @@ export const SimulationPage: React.FC<SimulationPageProps> = ({
           </MapContainer>
         </div>
 
-        {/* Right Simulation Parameters Sidebar */}
+        {/* Right Simulation Parameters & Analytics Sidebar */}
         <div className="w-80 bg-slate-900 border-l border-slate-800 p-4 flex flex-col space-y-4 shrink-0 z-10 overflow-y-auto">
-          <IgnitionSelector
-            ignitionPoint={ignitionPoint}
-            onSetIgnition={(pt) => {
-              setBoundaryWarning(null);
-              setIgnitionPoint(pt);
-            }}
-            onClearIgnition={clearIgnition}
-          />
+          {/* Navigation tab between Parameters and Spread Metrics */}
+          <div className="flex bg-slate-950/80 border border-slate-800 rounded-lg p-0.5 text-[11px] shrink-0">
+            <button
+              onClick={() => setSidebarTab('params')}
+              className={`flex-1 py-1 rounded text-center font-medium transition-colors ${
+                sidebarTab === 'params'
+                  ? 'bg-amber-600 text-white font-bold'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              ⚙️ Parameters
+            </button>
+            <button
+              onClick={() => setSidebarTab('metrics')}
+              className={`flex-1 py-1 rounded text-center font-medium transition-colors ${
+                sidebarTab === 'metrics'
+                  ? 'bg-amber-600 text-white font-bold'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              📈 Spread Analytics
+            </button>
+          </div>
 
-          <SimulationControls
-            durationHours={durationHours}
-            onDurationChange={setDurationHours}
-            stepMinutes={stepMinutes}
-            onStepMinutesChange={setStepMinutes}
-            windSpeedMs={windSpeedMs}
-            onWindSpeedChange={setWindSpeedMs}
-            windDirectionDeg={windDirectionDeg}
-            onWindDirectionChange={setWindDirectionDeg}
-            fuelType={fuelType}
-            onFuelTypeChange={setFuelType}
-            hasIgnition={!!ignitionPoint}
-            isSubmitting={isSubmitting}
-            onStartSimulation={() => startSimulation('Interactive Spread Run')}
-            onClearIgnition={clearIgnition}
-            hasCompletedSimulation={activeJob?.status === 'COMPLETED'}
-            onReplaySimulation={replaySimulation}
-          />
+          {sidebarTab === 'params' ? (
+            <>
+              <IgnitionSelector
+                ignitionPoint={ignitionPoint}
+                onSetIgnition={(pt) => {
+                  setBoundaryWarning(null);
+                  setIgnitionPoint(pt);
+                }}
+                onClearIgnition={clearIgnition}
+              />
 
-          {(activeJob || simulationDetail) && (
-            <SimulationStatus job={activeJob} detail={simulationDetail} />
+              <SimulationControls
+                durationHours={durationHours}
+                onDurationChange={setDurationHours}
+                stepMinutes={stepMinutes}
+                onStepMinutesChange={setStepMinutes}
+                windSpeedMs={windSpeedMs}
+                onWindSpeedChange={setWindSpeedMs}
+                windDirectionDeg={windDirectionDeg}
+                onWindDirectionChange={setWindDirectionDeg}
+                fuelType={fuelType}
+                onFuelTypeChange={setFuelType}
+                hasIgnition={!!ignitionPoint}
+                isSubmitting={isSubmitting}
+                onStartSimulation={() => startSimulation('Interactive Spread Run')}
+                onClearIgnition={clearIgnition}
+                hasCompletedSimulation={activeJob?.status === 'COMPLETED'}
+                onReplaySimulation={replaySimulation}
+              />
+
+              {(activeJob || simulationDetail) && (
+                <SimulationStatus job={activeJob} detail={simulationDetail} />
+              )}
+            </>
+          ) : (
+            <>
+              <SimulationMetricChart
+                stepsData={stepsData}
+                currentStepIndex={currentStepIndex}
+                onSelectStep={setCurrentStepIndex}
+              />
+
+              {(activeJob || simulationDetail) && (
+                <SimulationStatus job={activeJob} detail={simulationDetail} />
+              )}
+            </>
           )}
         </div>
       </div>

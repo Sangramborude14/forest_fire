@@ -7,7 +7,7 @@ import { LayerControls } from '../features/map/components/LayerControls';
 import { FireList } from '../features/fire/components/FireList';
 import { FireDetailsCard } from '../features/fire/components/FireDetailsCard';
 import { useActiveFires } from '../features/fire/hooks/useActiveFires';
-import { RegionSummary, FireHotspotProperties } from '../types/domain';
+import { RegionSummary, FireHotspotProperties, IgnitionPoint } from '../types/domain';
 import { GeoJSONFeature, PolygonGeometry, MultiPolygonGeometry } from '../types/geo';
 import { LoadingSpinner } from '../components/feedback/LoadingSpinner';
 import { ErrorAlert } from '../components/feedback/ErrorAlert';
@@ -15,11 +15,13 @@ import { ErrorAlert } from '../components/feedback/ErrorAlert';
 export interface ActiveFiresPageProps {
   selectedRegion: RegionSummary | null;
   boundary: GeoJSONFeature<PolygonGeometry | MultiPolygonGeometry, RegionSummary> | null;
+  onNavigateToSimulation?: (ignition: IgnitionPoint) => void;
 }
 
 export const ActiveFiresPage: React.FC<ActiveFiresPageProps> = ({
   selectedRegion,
   boundary,
+  onNavigateToSimulation,
 }) => {
   const {
     filteredFeatures,
@@ -31,6 +33,12 @@ export const ActiveFiresPage: React.FC<ActiveFiresPageProps> = ({
     error,
     reload,
   } = useActiveFires(selectedRegion?.id);
+
+  const handleSimulateFromFire = (fire: FireHotspotProperties) => {
+    if (onNavigateToSimulation && fire.latitude !== undefined && fire.longitude !== undefined) {
+      onNavigateToSimulation({ latitude: fire.latitude, longitude: fire.longitude });
+    }
+  };
 
   const hotspotPropertiesList = filteredFeatures.map((f: { properties: FireHotspotProperties }) => f.properties);
 
@@ -107,6 +115,7 @@ export const ActiveFiresPage: React.FC<ActiveFiresPageProps> = ({
                 <FireDetailsCard
                   fire={selectedFire}
                   onClose={() => setSelectedFire(null)}
+                  onSimulateFromFire={handleSimulateFromFire}
                 />
               </div>
             )}

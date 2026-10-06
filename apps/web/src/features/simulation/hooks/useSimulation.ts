@@ -12,8 +12,8 @@ import {
 } from '../../../types/domain';
 import { GeoJSONFeatureCollection, MultiPolygonGeometry } from '../../../types/geo';
 
-export function useSimulation(regionId: string) {
-  const [ignitionPoint, setIgnitionPoint] = useState<IgnitionPoint | null>(null);
+export function useSimulation(regionId: string, initialIgnition?: IgnitionPoint | null) {
+  const [ignitionPoint, setIgnitionPoint] = useState<IgnitionPoint | null>(initialIgnition || null);
   const [durationHours, setDurationHours] = useState<number>(6);
   const [stepMinutes, setStepMinutes] = useState<number>(60);
   const [windSpeedMs, setWindSpeedMs] = useState<number>(7.5);
@@ -21,6 +21,13 @@ export function useSimulation(regionId: string) {
   const [fuelType, setFuelType] = useState<string>('CONIFER_HIGH_FLAMMABILITY');
   const [activeJob, setActiveJob] = useState<SimulationJob | null>(null);
   const [simulationDetail, setSimulationDetail] = useState<SimulationDetail | null>(null);
+
+  // Synchronize initial ignition if provided from parent (e.g. cross-navigation from fire/risk)
+  useEffect(() => {
+    if (initialIgnition) {
+      setIgnitionPoint(initialIgnition);
+    }
+  }, [initialIgnition]);
   const [stepsData, setStepsData] = useState<
     GeoJSONFeatureCollection<MultiPolygonGeometry, SimulationStepProperties> | null
   >(null);

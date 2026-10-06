@@ -9,6 +9,30 @@ export interface MapControlsProps {
 
 export const MapControls: React.FC<MapControlsProps> = ({ onResetView, className = '' }) => {
   const { map, baseMap, setBaseMap } = useMapContext();
+  const [isFullscreen, setIsFullscreen] = React.useState(false);
+
+  React.useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, []);
+
+  const handleToggleFullscreen = () => {
+    if (typeof document === 'undefined') return;
+    if (!document.fullscreenElement) {
+      if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      }
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+      }
+    }
+  };
 
   const handleZoomIn = () => {
     if (map) map.zoomIn();
@@ -39,6 +63,16 @@ export const MapControls: React.FC<MapControlsProps> = ({ onResetView, className
           −
         </button>
       </div>
+
+      {/* Fullscreen GIS Toggle */}
+      <button
+        onClick={handleToggleFullscreen}
+        className="w-8 h-8 bg-slate-900/95 border border-slate-700/80 rounded-xl shadow-xl backdrop-blur-md flex items-center justify-center text-slate-200 hover:bg-slate-800 hover:text-amber-400 transition-colors text-xs font-semibold"
+        title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen GIS'}
+        aria-label="Toggle Fullscreen GIS"
+      >
+        {isFullscreen ? '🗗' : '⛶'}
+      </button>
 
       {/* Reset / Fit Region View */}
       {onResetView && (

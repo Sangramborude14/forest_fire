@@ -93,9 +93,9 @@ export const LayersPage: React.FC<LayersPageProps> = ({
                     <span className="text-slate-200">{selectedLayer.resolution || '500m'}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Integration:</span>
-                    <span className={selectedLayer.is_available ? 'text-emerald-400' : 'text-amber-400'}>
-                      {selectedLayer.is_available ? 'Operational' : 'Phase 4 Ingestion Pipeline'}
+                    <span>Status:</span>
+                    <span className={selectedLayer.is_available ? 'text-emerald-400 font-semibold' : 'text-amber-400'}>
+                      {selectedLayer.is_available ? 'Operational Layer' : 'Upcoming Ingestion Pipeline'}
                     </span>
                   </div>
                 </div>

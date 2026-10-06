@@ -36,10 +36,19 @@ export function useActiveFires(regionId?: string) {
   // Derived filtered features
   const filteredFeatures: GeoJSONFeature<PointGeometry, FireHotspotProperties>[] = (
     firesData?.features || []
-  ).filter((f: GeoJSONFeature<PointGeometry, FireHotspotProperties>) => {
-    if (confidenceFilter === 'all') return true;
-    return f.properties.confidence?.toLowerCase() === confidenceFilter.toLowerCase();
-  });
+  )
+    .filter((f: GeoJSONFeature<PointGeometry, FireHotspotProperties>) => {
+      if (confidenceFilter === 'all') return true;
+      return f.properties.confidence?.toLowerCase() === confidenceFilter.toLowerCase();
+    })
+    .map((f) => ({
+      ...f,
+      properties: {
+        ...f.properties,
+        longitude: f.properties.longitude ?? f.geometry?.coordinates?.[0] ?? 0,
+        latitude: f.properties.latitude ?? f.geometry?.coordinates?.[1] ?? 0,
+      },
+    }));
 
   return {
     firesData,

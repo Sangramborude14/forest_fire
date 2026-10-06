@@ -20,6 +20,7 @@ COPY services/api /app/services/api
 COPY services/risk-engine /app/services/risk-engine
 COPY services/spread-engine /app/services/spread-engine
 COPY services/data-pipeline /app/services/data-pipeline
+COPY models /app/models
 
 EXPOSE 8000
 

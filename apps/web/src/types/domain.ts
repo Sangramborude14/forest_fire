@@ -41,6 +41,8 @@ export interface FireHotspotProperties {
   brightness_temperature_kelvin: number | null;
   status: FireStatus | string;
   region_id?: string | null;
+  latitude?: number;
+  longitude?: number;
   raw_properties?: Record<string, unknown>;
 }
 
@@ -85,6 +87,7 @@ export interface RiskSummary {
   high_risk_cells: number;
   extreme_risk_cells: number;
   mean_probability: number;
+  max_probability?: number;
   risk_distribution: {
     low: number;
     moderate: number;

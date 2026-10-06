@@ -60,6 +60,7 @@ services:
     volumes:
       - ./services/api:/app/services/api
       - ./packages:/app/packages
+      - ./models:/app/models
     depends_on:
       postgres:
         condition: service_healthy
@@ -87,6 +88,7 @@ services:
       - ./services/spread-engine:/app/services/spread-engine
       - ./services/risk-engine:/app/services/risk-engine
       - ./packages:/app/packages
+      - ./models:/app/models
     depends_on:
       postgres:
         condition: service_healthy
