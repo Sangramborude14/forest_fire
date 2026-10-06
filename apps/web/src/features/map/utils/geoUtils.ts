@@ -101,3 +101,68 @@ export function getBoundsFromGeoJSON(geometry: {
     return null;
   }
 }
+
+/**
+ * Checks whether a 2D point (x=lon, y=lat) is inside a linear ring
+ */
+function isPointInRing(x: number, y: number, ring: number[][]): boolean {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const xi = ring[i][0];
+    const yi = ring[i][1];
+    const xj = ring[j][0];
+    const yj = ring[j][1];
+
+    const intersect =
+      yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
+    if (intersect) inside = !inside;
+  }
+  return inside;
+}
+
+/**
+ * Verifies whether geographic coordinate {latitude, longitude} is contained
+ * within a GeoJSON Polygon or MultiPolygon geometry.
+ */
+export function isPointInGeometry(
+  point: { latitude: number; longitude: number },
+  geometry?: { type: string; coordinates: unknown } | null
+): boolean {
+  if (!geometry || !geometry.coordinates) {
+    return true; // No boundary restriction provided
+  }
+
+  const { longitude: x, latitude: y } = point;
+
+  if (geometry.type === 'Polygon') {
+    const rings = geometry.coordinates as number[][][];
+    if (!rings || rings.length === 0) return true;
+    // Must be inside exterior ring (ring 0) and outside holes (ring 1..n)
+    const inExterior = isPointInRing(x, y, rings[0]);
+    if (!inExterior) return false;
+    for (let h = 1; h < rings.length; h++) {
+      if (isPointInRing(x, y, rings[h])) return false;
+    }
+    return true;
+  }
+
+  if (geometry.type === 'MultiPolygon') {
+    const polygons = geometry.coordinates as number[][][][];
+    if (!polygons || polygons.length === 0) return true;
+    for (const rings of polygons) {
+      if (rings && rings.length > 0 && isPointInRing(x, y, rings[0])) {
+        let inHole = false;
+        for (let h = 1; h < rings.length; h++) {
+          if (isPointInRing(x, y, rings[h])) {
+            inHole = true;
+            break;
+          }
+        }
+        if (!inHole) return true;
+      }
+    }
+    return false;
+  }
+
+  return true;
+}

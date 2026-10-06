@@ -8,6 +8,7 @@ from ...schemas.simulation import (
     SimulationTimelineResponse,
     SimulationTimestepDetailResponse,
 )
+from ...schemas.geojson import GeoJSONFeatureCollection
 from ...services.simulation_service import SimulationService
 from ...dependencies.services import get_simulation_service
 
@@ -55,7 +56,7 @@ async def get_simulation_timeline(
     simulation_id: str = Path(..., description="Simulation UUID"),
     service: SimulationService = Depends(get_simulation_service),
 ) -> SimulationTimelineResponse:
-    """Retrieve hourly burned area, velocity, and intensity metrics for all 12 timesteps."""
+    """Retrieve hourly burned area, velocity, and intensity metrics for all timesteps."""
     return service.get_simulation_timeline(simulation_id)
 
 
@@ -67,8 +68,22 @@ async def get_simulation_timeline(
 )
 async def get_simulation_timestep(
     simulation_id: str = Path(..., description="Simulation UUID"),
-    hour: int = Path(..., ge=1, le=12, description="Timestep hour (1-12)"),
+    hour: int = Path(..., ge=0, le=12, description="Timestep hour (0-12)"),
     service: SimulationService = Depends(get_simulation_service),
 ) -> SimulationTimestepDetailResponse:
     """Retrieve GeoJSON boundary perimeter for a specific hour of the fire spread."""
     return service.get_simulation_timestep(simulation_id, hour)
+
+
+@router.get(
+    "/{simulation_id}/steps",
+    response_model=GeoJSONFeatureCollection,
+    status_code=status.HTTP_200_OK,
+    summary="Get All Simulation Timestep Perimeters as GeoJSON FeatureCollection"
+)
+async def get_simulation_steps(
+    simulation_id: str = Path(..., description="Simulation UUID"),
+    service: SimulationService = Depends(get_simulation_service),
+) -> GeoJSONFeatureCollection:
+    """Retrieve all hourly boundary perimeters as a unified GeoJSON FeatureCollection."""
+    return service.get_simulation_steps_collection(simulation_id)

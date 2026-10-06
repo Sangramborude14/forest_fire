@@ -2,12 +2,15 @@ import React, { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import { useMapContext } from '../hooks/useMapContext';
 import { IgnitionPoint, SimulationStepProperties } from '../../../types/domain';
-import { GeoJSONFeatureCollection, MultiPolygonGeometry } from '../../../types/geo';
+import { GeoJSONFeatureCollection, MultiPolygonGeometry, PolygonGeometry } from '../../../types/geo';
 import { createIgnitionIcon } from '../utils/geoUtils';
 
 export interface SimulationLayerProps {
   ignitionPoint?: IgnitionPoint | null;
-  perimeterData?: GeoJSONFeatureCollection<MultiPolygonGeometry, SimulationStepProperties> | null;
+  perimeterData?: GeoJSONFeatureCollection<
+    MultiPolygonGeometry | PolygonGeometry,
+    SimulationStepProperties
+  > | null;
   currentStepIndex?: number;
 }
 
@@ -93,13 +96,37 @@ export const SimulationLayer: React.FC<SimulationLayerProps> = ({
         onEachFeature: (feature, layer) => {
           const props = feature.properties as SimulationStepProperties;
           if (props) {
+            const stepNum = props.step_hour ?? props.step_number;
             layer.bindTooltip(
               `<div class="font-sans text-xs">
-                <strong>Step ${props.step_number} (+${props.elapsed_minutes}m)</strong><br/>
-                Burned Area: ${props.cumulative_burned_area_ha.toFixed(1)} ha<br/>
-                Active Front: ${props.active_front_cells_count} cells
+                <strong>Hour ${stepNum} (T+${props.elapsed_minutes}m)</strong><br/>
+                Burned Area: <strong>${props.cumulative_burned_area_ha.toFixed(1)} ha</strong><br/>
+                ${props.spread_velocity_kmh !== undefined ? `Velocity: ${props.spread_velocity_kmh.toFixed(1)} km/h<br/>` : ''}
+                Active Front: ${props.active_front_cells_count || 0} cells
               </div>`,
               { sticky: true, className: 'leaflet-dark-tooltip' }
+            );
+
+            layer.bindPopup(
+              `<div class="p-1 font-sans text-xs space-y-1">
+                <div class="font-bold text-amber-400 border-b border-slate-700 pb-1">
+                  Simulation Step ${stepNum} (T+${props.elapsed_minutes} min)
+                </div>
+                <div class="font-mono text-slate-200">
+                  Cumulative Burned: <span class="text-rose-400 font-bold">${props.cumulative_burned_area_ha.toFixed(1)} ha</span>
+                </div>
+                ${props.spread_velocity_kmh !== undefined ? `
+                <div class="font-mono text-slate-300">
+                  Spread Velocity: ${props.spread_velocity_kmh.toFixed(2)} km/h
+                </div>` : ''}
+                ${props.spread_direction_deg !== undefined ? `
+                <div class="font-mono text-slate-300">
+                  Spread Direction: ${props.spread_direction_deg.toFixed(0)}°
+                </div>` : ''}
+                <div class="font-mono text-slate-300">
+                  Active Front: ${props.active_front_cells_count || 0} cells
+                </div>
+              </div>`
             );
           }
         },

@@ -30,3 +30,26 @@ export async function fetchSimulationSteps(
     `/simulations/${encodeURIComponent(simulationId)}/steps`
   );
 }
+
+export async function fetchSimulationTimeline(
+  simulationId: string
+): Promise<{
+  simulation_id: string;
+  total_steps: number;
+  timeline: Array<{
+    step_hour: number;
+    burned_area_ha: number;
+    spread_velocity_kmh: number;
+    spread_direction_deg: number;
+    intensity_mw: number;
+  }>;
+}> {
+  return httpClient.get(`/simulations/${encodeURIComponent(simulationId)}/timeline`);
+}
+
+export async function fetchSimulationTimestep(
+  simulationId: string,
+  hour: number
+) {
+  return httpClient.get(`/simulations/${encodeURIComponent(simulationId)}/timesteps/${hour}`);
+}

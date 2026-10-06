@@ -10,6 +10,7 @@ from .simulation import (
     SimulationTimestepItem,
     SimulationTimelineResponse,
     SimulationTimestepDetailResponse,
+    SimulationStepsFeatureCollectionResponse,
 )
 
 __all__ = [
@@ -22,4 +23,5 @@ __all__ = [
     "SimulationTimestepItem",
     "SimulationTimelineResponse",
     "SimulationTimestepDetailResponse",
+    "SimulationStepsFeatureCollectionResponse",
 ]

@@ -64,4 +64,59 @@ describe('Simulation Controls and Ignition Selector', () => {
       longitude: 78.5678,
     });
   });
+
+  it('renders and adjusts environmental overrides when toggled', () => {
+    const handleWindSpeed = vi.fn();
+    const handleWindDir = vi.fn();
+
+    render(
+      <SimulationControls
+        durationHours={6}
+        onDurationChange={vi.fn()}
+        stepMinutes={60}
+        onStepMinutesChange={vi.fn()}
+        windSpeedMs={10}
+        onWindSpeedChange={handleWindSpeed}
+        windDirectionDeg={270}
+        onWindDirectionChange={handleWindDir}
+        hasIgnition={true}
+        onStartSimulation={vi.fn()}
+      />
+    );
+
+    // Expand overrides
+    const toggleBtn = screen.getByRole('button', { name: /weather & fuel overrides/i });
+    fireEvent.click(toggleBtn);
+
+    expect(screen.getByText(/10 m\/s \(36.0 km\/h\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/270° \(W\)/i)).toBeInTheDocument();
+  });
+
+  it('renders replay and reset buttons when simulation is complete and ignition is set', () => {
+    const handleReplay = vi.fn();
+    const handleClear = vi.fn();
+
+    render(
+      <SimulationControls
+        durationHours={6}
+        onDurationChange={vi.fn()}
+        stepMinutes={60}
+        onStepMinutesChange={vi.fn()}
+        hasIgnition={true}
+        hasCompletedSimulation={true}
+        onReplaySimulation={handleReplay}
+        onClearIgnition={handleClear}
+        onStartSimulation={vi.fn()}
+      />
+    );
+
+    const replayBtn = screen.getByRole('button', { name: /replay simulation/i });
+    const clearBtn = screen.getByRole('button', { name: /reset ignition point/i });
+
+    fireEvent.click(replayBtn);
+    expect(handleReplay).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(clearBtn);
+    expect(handleClear).toHaveBeenCalledTimes(1);
+  });
 });

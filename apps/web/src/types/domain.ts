@@ -101,28 +101,55 @@ export interface IgnitionPoint {
 
 export interface SimulationCreateRequest {
   region_id: string;
-  name: string;
-  ignition_points: IgnitionPoint[];
+  name?: string;
+  ignition_point?: IgnitionPoint;
+  ignition_points?: IgnitionPoint[];
+  ignition_time?: string;
+  duration_hours?: number;
   max_duration_hours?: number;
   temporal_step_minutes?: number;
+  weather_scenario?: {
+    wind_speed_ms?: number;
+    wind_direction_deg?: number;
+    temperature_c?: number;
+    relative_humidity_pct?: number;
+  };
+  fuel_type?: string;
 }
 
 export interface SimulationJob {
   simulation_id: string;
   status: SimulationStatus;
   message?: string;
-  submitted_at: string;
+  created_at?: string;
+  submitted_at?: string;
+  duration_hours?: number;
+  poll_url?: string;
 }
 
 export interface SimulationDetail {
-  id: string;
-  region_id: string;
-  name: string;
+  id?: string;
+  simulation_id: string;
+  region_id?: string;
+  name?: string;
   status: SimulationStatus;
-  ignition_source: string;
-  max_duration_hours: number;
-  temporal_step_minutes: number;
-  perimeter_summary_geojson?: Record<string, unknown> | null;
+  progress_pct?: number;
+  duration_hours: number;
+  max_duration_hours?: number;
+  temporal_step_minutes?: number;
+  ignition_source?: string;
+  ignition_point?: {
+    type: 'Point';
+    coordinates: [number, number]; // [lon, lat]
+  };
+  metrics?: {
+    total_area_burned_ha: number;
+    peak_spread_velocity_kmh: number;
+    dominant_spread_direction_deg: number;
+  } | null;
+  engine_version?: string;
+  completed_steps?: number;
+  total_steps?: number;
   created_at: string;
   started_at?: string | null;
   completed_at?: string | null;
@@ -131,9 +158,14 @@ export interface SimulationDetail {
 
 export interface SimulationStepProperties {
   step_number: number;
+  step_hour?: number;
   elapsed_minutes: number;
   cumulative_burned_area_ha: number;
-  active_front_cells_count: number;
+  burned_area_ha?: number;
+  active_front_cells_count?: number;
+  spread_velocity_kmh?: number;
+  spread_direction_deg?: number;
+  intensity_mw?: number;
   max_rate_of_spread_meters_per_min?: number;
 }
 

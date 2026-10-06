@@ -129,3 +129,19 @@ class FeatureDataUnavailableException(ForestFireAppException):
             details=details
         )
 
+
+class IgnitionOutsideRegionException(ForestFireAppException):
+    """Raised when specified ignition coordinates lie outside the requested region boundary."""
+    def __init__(
+        self,
+        message: str = "Ignition point lies outside the specified region boundary.",
+        details: Optional[Dict[str, Any]] = None
+    ):
+        super().__init__(
+            message=message,
+            code="IGNITION_OUTSIDE_REGION",
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            details=details
+        )
+
+

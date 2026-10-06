@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { MapContainer } from '../features/map/components/MapContainer';
 import { RegionLayer } from '../features/map/components/RegionLayer';
 import { SimulationLayer } from '../features/map/components/SimulationLayer';
@@ -12,6 +12,7 @@ import { useSimulation } from '../features/simulation/hooks/useSimulation';
 import { RegionSummary } from '../types/domain';
 import { GeoJSONFeature, PolygonGeometry, MultiPolygonGeometry } from '../types/geo';
 import { ErrorAlert } from '../components/feedback/ErrorAlert';
+import { isPointInGeometry } from '../features/map/utils/geoUtils';
 
 export interface SimulationPageProps {
   selectedRegion: RegionSummary | null;
@@ -22,6 +23,8 @@ export const SimulationPage: React.FC<SimulationPageProps> = ({
   selectedRegion,
   boundary,
 }) => {
+  const [boundaryWarning, setBoundaryWarning] = useState<string | null>(null);
+
   const {
     ignitionPoint,
     setIgnitionPoint,
@@ -29,6 +32,12 @@ export const SimulationPage: React.FC<SimulationPageProps> = ({
     setDurationHours,
     stepMinutes,
     setStepMinutes,
+    windSpeedMs,
+    setWindSpeedMs,
+    windDirectionDeg,
+    setWindDirectionDeg,
+    fuelType,
+    setFuelType,
     activeJob,
     simulationDetail,
     stepsData,
@@ -42,9 +51,19 @@ export const SimulationPage: React.FC<SimulationPageProps> = ({
     clearIgnition,
     stepForward,
     stepBackward,
+    replaySimulation,
   } = useSimulation(selectedRegion?.id || 'reg-01');
 
   const handleMapClick = (lat: number, lng: number) => {
+    // Validate if the clicked point is within the selected region boundary
+    if (boundary?.geometry && !isPointInGeometry({ latitude: lat, longitude: lng }, boundary.geometry)) {
+      setBoundaryWarning(
+        `Clicked coordinate (${lat.toFixed(4)}°N, ${lng.toFixed(4)}°E) is outside the boundary of region '${selectedRegion?.name || 'Selected Region'}'. Please choose a location inside the highlighted area.`
+      );
+      return;
+    }
+
+    setBoundaryWarning(null);
     setIgnitionPoint({ latitude: lat, longitude: lng });
   };
 
@@ -69,12 +88,20 @@ export const SimulationPage: React.FC<SimulationPageProps> = ({
       <div className="flex-1 flex overflow-hidden relative">
         {/* Map Viewport */}
         <div className="flex-1 relative overflow-hidden">
-          {error && (
-            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 w-full max-w-md px-4">
-              <ErrorAlert
-                title="Simulation Dispatch Warning"
-                message={error}
-              />
+          {(error || boundaryWarning) && (
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 w-full max-w-md px-4 space-y-2">
+              {error && (
+                <ErrorAlert
+                  title="Simulation Dispatch Warning"
+                  message={error}
+                />
+              )}
+              {boundaryWarning && (
+                <ErrorAlert
+                  title="Ignition Boundary Warning"
+                  message={boundaryWarning}
+                />
+              )}
             </div>
           )}
 
@@ -102,6 +129,7 @@ export const SimulationPage: React.FC<SimulationPageProps> = ({
                 onTogglePlay={() => setIsPlaying(!isPlaying)}
                 onStepForward={stepForward}
                 onStepBackward={stepBackward}
+                onReplay={replaySimulation}
               />
             </div>
           </MapContainer>
@@ -111,7 +139,10 @@ export const SimulationPage: React.FC<SimulationPageProps> = ({
         <div className="w-80 bg-slate-900 border-l border-slate-800 p-4 flex flex-col space-y-4 shrink-0 z-10 overflow-y-auto">
           <IgnitionSelector
             ignitionPoint={ignitionPoint}
-            onSetIgnition={setIgnitionPoint}
+            onSetIgnition={(pt) => {
+              setBoundaryWarning(null);
+              setIgnitionPoint(pt);
+            }}
             onClearIgnition={clearIgnition}
           />
 
@@ -120,9 +151,18 @@ export const SimulationPage: React.FC<SimulationPageProps> = ({
             onDurationChange={setDurationHours}
             stepMinutes={stepMinutes}
             onStepMinutesChange={setStepMinutes}
+            windSpeedMs={windSpeedMs}
+            onWindSpeedChange={setWindSpeedMs}
+            windDirectionDeg={windDirectionDeg}
+            onWindDirectionChange={setWindDirectionDeg}
+            fuelType={fuelType}
+            onFuelTypeChange={setFuelType}
             hasIgnition={!!ignitionPoint}
             isSubmitting={isSubmitting}
             onStartSimulation={() => startSimulation('Interactive Spread Run')}
+            onClearIgnition={clearIgnition}
+            hasCompletedSimulation={activeJob?.status === 'COMPLETED'}
+            onReplaySimulation={replaySimulation}
           />
 
           {(activeJob || simulationDetail) && (

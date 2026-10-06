@@ -10,6 +10,7 @@ export interface TimelineProps {
   onTogglePlay: () => void;
   onStepForward: () => void;
   onStepBackward: () => void;
+  onReplay?: () => void;
   className?: string;
 }
 
@@ -21,17 +22,20 @@ export const Timeline: React.FC<TimelineProps> = ({
   onTogglePlay,
   onStepForward,
   onStepBackward,
+  onReplay,
   className = '',
 }) => {
   const steps = stepsData?.features || [];
   const hasSteps = steps.length > 0;
   const currentStep = hasSteps ? steps[currentStepIndex]?.properties : null;
+  const totalHours = Math.max(1, steps.length - 1);
+  const currentHour = currentStep?.step_hour ?? currentStep?.step_number ?? 0;
 
   return (
     <div
       className={`bg-slate-900/95 border border-slate-700/80 rounded-2xl p-4 shadow-2xl backdrop-blur-md text-xs select-none ${className}`}
     >
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
         {/* Playback Controls */}
         <div className="flex items-center space-x-2">
           <button
@@ -61,9 +65,20 @@ export const Timeline: React.FC<TimelineProps> = ({
           >
             ⏭
           </button>
+          {onReplay && (
+            <button
+              onClick={onReplay}
+              disabled={!hasSteps}
+              className="w-7 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center justify-center font-bold disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              title="Replay from Beginning"
+              aria-label="Replay"
+            >
+              🔁
+            </button>
+          )}
 
           <span className="text-slate-300 font-semibold ml-2">
-            Simulation Progression
+            Simulation Timeline
           </span>
         </div>
 
@@ -74,8 +89,18 @@ export const Timeline: React.FC<TimelineProps> = ({
               <span className="text-slate-400">
                 Burned: <strong className="text-rose-400">{currentStep.cumulative_burned_area_ha.toFixed(1)} ha</strong>
               </span>
+              {currentStep.spread_velocity_kmh !== undefined && (
+                <span className="text-slate-400 hidden sm:inline">
+                  Velocity: <strong className="text-amber-300">{currentStep.spread_velocity_kmh.toFixed(1)} km/h</strong>
+                </span>
+              )}
+              {currentStep.active_front_cells_count !== undefined && (
+                <span className="text-slate-400 hidden md:inline">
+                  Front: <strong className="text-orange-400">{currentStep.active_front_cells_count} cells</strong>
+                </span>
+              )}
               <span className="px-2 py-0.5 rounded bg-slate-800 text-amber-400 border border-slate-700 font-bold">
-                T+{currentStep.elapsed_minutes}m (Step {currentStep.step_number})
+                Hour {currentHour} of {totalHours} · T+{currentStep.elapsed_minutes}m (Step {currentStep.step_number})
               </span>
             </>
           ) : (

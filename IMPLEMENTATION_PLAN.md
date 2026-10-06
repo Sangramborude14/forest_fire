@@ -112,13 +112,27 @@ This roadmap governs the end-to-end development of the **Predictive Forest Fire 
 
 ---
 
-### Phase 8: Asynchronous Simulation & Live GIS Visualization
+### Phase 8: Asynchronous Simulation & Live GIS Visualization [COMPLETED]
 - **Objectives**: Integrate the spread engine into Celery background workers and provide interactive animated playback on the GIS frontend.
 - **Deliverables**:
-  - Celery task execution for on-demand simulation requests.
-  - Timestep persistence in PostGIS (`simulation_steps`).
-  - Frontend interactive 12-hour timeline slider with play/pause/scrub controls.
-  - Multi-temporal polygon perimeter rendering showing fire progression hour-by-hour.
+  - Celery background task `run_fire_spread_simulation` executing the Phase 7 Cellular Automata Spread Engine asynchronously.
+  - Robust worker context management supporting both production Celery broker (Redis) and thread pool fallback in detached/testing modes.
+  - Lifecycle state tracking: `QUEUED` $\to$ `RUNNING` $\to$ `COMPLETED` (or `FAILED`), with progress percentage and runtime telemetry.
+  - Spatial validation of ignition points against region boundary polygons, preventing out-of-boundary runs with HTTP 422 `IGNITION_OUTSIDE_REGION`.
+  - Database schema and PostGIS persistence of hourly progression perimeters (`simulation_steps`) as `GEOMETRY(4326)` supporting `Polygon` and `MultiPolygon`.
+  - Rich FastAPI endpoints:
+    - `POST /api/v1/simulations`: Enqueue 1h to 12h simulation with optional environmental/weather overrides.
+    - `GET /api/v1/simulations/{id}`: Poll status, progress %, metrics, and engine version.
+    - `GET /api/v1/simulations/{id}/timeline`: Retrieve hourly burned area, velocity, direction, and intensity.
+    - `GET /api/v1/simulations/{id}/timesteps/{hour}`: Retrieve single hour perimeter GeoJSON feature and metrics.
+    - `GET /api/v1/simulations/{id}/steps`: Retrieve full GeoJSON FeatureCollection of all hourly perimeters.
+  - Interactive GIS Timeline Animation in React:
+    - Play / Pause (▶ / ⏸), step forward / backward (⏮ / ⏭), scrub slider (0h to 12h), and replay (🔁).
+    - Real-time telemetry displaying Hour $N$, elapsed minutes, burned area (ha), spread velocity (km/h), and active burning front cells.
+    - Environmental scenario adjustment controls (wind speed slider, wind direction compass/degree slider, fuel classification).
+    - Map click boundary containment check with friendly warning alert if clicked outside active region.
+    - Multi-temporal Leaflet GIS perimeter rendering with distinct styling for active front (rose-500) vs burned history (dashed orange-400), plus click popups and tooltips.
+  - Comprehensive verification: 40/40 API tests passing, 141/141 backend monorepo tests passing, 28/28 web tests passing, and clean production build.
 
 ---
 

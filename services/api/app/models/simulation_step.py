@@ -20,7 +20,7 @@ class SimulationStep(Base):
     spread_velocity_kmh = Column(Numeric(6, 2), nullable=False)
     spread_direction_deg = Column(Numeric(5, 2), nullable=False)
     intensity_mw = Column(Numeric(8, 2), nullable=False)
-    perimeter_geom = Column(Geometry(geometry_type="POLYGON", srid=4326), nullable=False)
+    perimeter_geom = Column(Geometry(geometry_type="GEOMETRY", srid=4326), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     # Relationships

@@ -77,4 +77,42 @@ describe('Timeline Scrubber Component', () => {
     fireEvent.click(nextBtn);
     expect(handleStepForward).toHaveBeenCalled();
   });
+
+  it('triggers onReplay when replay button is clicked', () => {
+    const handleReplay = vi.fn();
+    const mockSteps: GeoJSONFeatureCollection<MultiPolygonGeometry, SimulationStepProperties> = {
+      type: 'FeatureCollection',
+      features: [
+        {
+          type: 'Feature',
+          geometry: { type: 'MultiPolygon', coordinates: [] },
+          properties: {
+            step_number: 1,
+            elapsed_minutes: 60,
+            cumulative_burned_area_ha: 15.0,
+            spread_velocity_kmh: 1.2,
+            active_front_cells_count: 5,
+          },
+        },
+      ],
+    };
+
+    render(
+      <Timeline
+        stepsData={mockSteps}
+        currentStepIndex={0}
+        onSelectStep={vi.fn()}
+        isPlaying={false}
+        onTogglePlay={vi.fn()}
+        onStepForward={vi.fn()}
+        onStepBackward={vi.fn()}
+        onReplay={handleReplay}
+      />
+    );
+
+    const replayBtn = screen.getByRole('button', { name: /replay/i });
+    fireEvent.click(replayBtn);
+    expect(handleReplay).toHaveBeenCalledTimes(1);
+    expect(screen.getByText(/1.2 km\/h/i)).toBeInTheDocument();
+  });
 });

@@ -16,6 +16,9 @@ export function useSimulation(regionId: string) {
   const [ignitionPoint, setIgnitionPoint] = useState<IgnitionPoint | null>(null);
   const [durationHours, setDurationHours] = useState<number>(6);
   const [stepMinutes, setStepMinutes] = useState<number>(60);
+  const [windSpeedMs, setWindSpeedMs] = useState<number>(7.5);
+  const [windDirectionDeg, setWindDirectionDeg] = useState<number>(225.0);
+  const [fuelType, setFuelType] = useState<string>('CONIFER_HIGH_FLAMMABILITY');
   const [activeJob, setActiveJob] = useState<SimulationJob | null>(null);
   const [simulationDetail, setSimulationDetail] = useState<SimulationDetail | null>(null);
   const [stepsData, setStepsData] = useState<
@@ -27,6 +30,68 @@ export function useSimulation(regionId: string) {
   const [error, setError] = useState<string | null>(null);
 
   const playbackTimerRef = useRef<number | null>(null);
+  const pollingTimerRef = useRef<number | null>(null);
+
+  // Synchronize simulation ID from URL on mount
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const urlSimId = params.get('simulationId');
+    if (urlSimId && !activeJob) {
+      setActiveJob({
+        simulation_id: urlSimId,
+        status: 'RUNNING',
+        created_at: new Date().toISOString(),
+      });
+    }
+  }, [activeJob]);
+
+  // Status Polling Effect
+  useEffect(() => {
+    const simId = activeJob?.simulation_id;
+    if (!simId) return;
+
+    // Terminal check
+    if (activeJob.status === 'COMPLETED' || activeJob.status === 'FAILED') {
+      if (pollingTimerRef.current) clearInterval(pollingTimerRef.current);
+      return;
+    }
+
+    const pollStatus = async () => {
+      try {
+        const detail = await fetchSimulation(simId);
+        setSimulationDetail(detail);
+
+        if (detail.status === 'COMPLETED') {
+          if (pollingTimerRef.current) clearInterval(pollingTimerRef.current);
+          setActiveJob((prev) => (prev ? { ...prev, status: 'COMPLETED' } : null));
+
+          // Fetch complete timestep boundaries
+          const steps = await fetchSimulationSteps(simId);
+          if (steps && steps.features?.length) {
+            setStepsData(steps);
+            setCurrentStepIndex(0);
+          }
+        } else if (detail.status === 'FAILED') {
+          if (pollingTimerRef.current) clearInterval(pollingTimerRef.current);
+          setActiveJob((prev) => (prev ? { ...prev, status: 'FAILED' } : null));
+          setError(detail.error_message || 'Fire spread simulation failed.');
+        } else {
+          setActiveJob((prev) => (prev ? { ...prev, status: detail.status } : null));
+        }
+      } catch (err: unknown) {
+        // Polling retry: don't crash on transient network error
+      }
+    };
+
+    // Immediate initial poll
+    pollStatus();
+    pollingTimerRef.current = window.setInterval(pollStatus, 1500);
+
+    return () => {
+      if (pollingTimerRef.current) clearInterval(pollingTimerRef.current);
+    };
+  }, [activeJob?.simulation_id, activeJob?.status]);
 
   // Playback timer loop
   useEffect(() => {
@@ -45,11 +110,11 @@ export function useSimulation(regionId: string) {
       setCurrentStepIndex((prev) => {
         if (prev >= totalSteps - 1) {
           setIsPlaying(false);
-          return 0; // Loop or stop
+          return prev; // Stop at final step
         }
         return prev + 1;
       });
-    }, 1500);
+    }, 1200);
 
     return () => {
       if (playbackTimerRef.current) clearInterval(playbackTimerRef.current);
@@ -65,25 +130,45 @@ export function useSimulation(regionId: string) {
 
     setIsSubmitting(true);
     setError(null);
+    setIsPlaying(false);
 
     try {
       const job = await createSimulation({
         region_id: regionId,
         name,
+        ignition_point: ignitionPoint,
         ignition_points: [ignitionPoint],
+        duration_hours: durationHours,
         max_duration_hours: durationHours,
         temporal_step_minutes: stepMinutes,
+        weather_scenario: {
+          wind_speed_ms: windSpeedMs,
+          wind_direction_deg: windDirectionDeg,
+        },
+        fuel_type: fuelType,
       });
       setActiveJob(job);
 
-      // Fetch simulation details and initial steps
+      // Persist active simulation in URL query parameter
+      if (typeof window !== 'undefined' && window.history) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('simulationId', job.simulation_id);
+        window.history.replaceState(null, '', url.toString());
+      }
+
+      // Fetch simulation details and steps immediately (covers eager execution)
       const [detail, steps] = await Promise.all([
         fetchSimulation(job.simulation_id).catch(() => null),
         fetchSimulationSteps(job.simulation_id).catch(() => null),
       ]);
 
-      if (detail) setSimulationDetail(detail);
-      if (steps) {
+      if (detail) {
+        setSimulationDetail(detail);
+        if (detail.status === 'COMPLETED') {
+          setActiveJob((prev) => (prev ? { ...prev, status: 'COMPLETED' } : null));
+        }
+      }
+      if (steps && steps.features?.length) {
         setStepsData(steps);
         setCurrentStepIndex(0);
       }
@@ -107,6 +192,11 @@ export function useSimulation(regionId: string) {
     setCurrentStepIndex((prev) => Math.max(prev - 1, 0));
   }, []);
 
+  const handleReplay = useCallback(() => {
+    setCurrentStepIndex(0);
+    setIsPlaying(true);
+  }, []);
+
   return {
     ignitionPoint,
     setIgnitionPoint,
@@ -114,6 +204,12 @@ export function useSimulation(regionId: string) {
     setDurationHours,
     stepMinutes,
     setStepMinutes,
+    windSpeedMs,
+    setWindSpeedMs,
+    windDirectionDeg,
+    setWindDirectionDeg,
+    fuelType,
+    setFuelType,
     activeJob,
     simulationDetail,
     stepsData,
@@ -127,5 +223,6 @@ export function useSimulation(regionId: string) {
     clearIgnition: handleClearIgnition,
     stepForward: handleStepForward,
     stepBackward: handleStepBackward,
+    replaySimulation: handleReplay,
   };
 }

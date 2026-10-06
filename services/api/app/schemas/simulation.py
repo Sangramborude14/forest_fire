@@ -1,8 +1,8 @@
 """Pydantic schemas for 12-hour fire spread simulation endpoints."""
 
 from typing import Any, Dict, List, Optional
-from pydantic import BaseModel, Field
-from .geojson import GeoJSONPoint, GeoJSONFeature, GeoJSONPolygon
+from pydantic import BaseModel, Field, model_validator
+from .geojson import GeoJSONPoint, GeoJSONFeature, GeoJSONPolygon, GeoJSONFeatureCollection
 
 
 class IgnitionPointInput(BaseModel):
@@ -13,8 +13,8 @@ class IgnitionPointInput(BaseModel):
 
 class WeatherScenarioInput(BaseModel):
     """Optional meteorological scenario overrides."""
-    wind_speed_ms: Optional[float] = Field(default=5.0, ge=0.0)
-    wind_direction_deg: Optional[float] = Field(default=0.0, ge=0.0, le=360.0)
+    wind_speed_ms: Optional[float] = Field(default=7.5, ge=0.0)
+    wind_direction_deg: Optional[float] = Field(default=225.0, ge=0.0, le=360.0)
     temperature_c: Optional[float] = 30.0
     relative_humidity_pct: Optional[float] = Field(default=25.0, ge=0.0, le=100.0)
 
@@ -22,10 +22,34 @@ class WeatherScenarioInput(BaseModel):
 class SimulationCreateRequest(BaseModel):
     """Payload to initiate a 12-hour simulation job."""
     region_id: str
-    ignition_point: IgnitionPointInput
-    ignition_time: str
-    duration_hours: int = Field(default=12, ge=1, le=12)
+    ignition_point: Optional[IgnitionPointInput] = None
+    ignition_points: Optional[List[IgnitionPointInput]] = None
+    ignition_time: Optional[str] = None
+    duration_hours: Optional[int] = Field(default=12, ge=1, le=12)
+    max_duration_hours: Optional[int] = None
+    temporal_step_minutes: Optional[int] = None
     weather_scenario: Optional[WeatherScenarioInput] = None
+    fuel_type: Optional[str] = None
+    slope_deg: Optional[float] = None
+    aspect_deg: Optional[float] = None
+    name: Optional[str] = "12-Hour Fire Spread Simulation"
+
+    @model_validator(mode="after")
+    def resolve_ignition_and_duration(self) -> "SimulationCreateRequest":
+        # Resolve ignition_point from ignition_points if needed
+        if self.ignition_point is None:
+            if self.ignition_points and len(self.ignition_points) > 0:
+                self.ignition_point = self.ignition_points[0]
+            else:
+                raise ValueError("Must provide ignition_point with latitude and longitude.")
+
+        # Resolve duration
+        if self.max_duration_hours is not None:
+            self.duration_hours = max(1, min(12, self.max_duration_hours))
+        elif self.duration_hours is None:
+            self.duration_hours = 12
+
+        return self
 
 
 class SimulationCreateResponse(BaseModel):
@@ -54,6 +78,10 @@ class SimulationStatusResponse(BaseModel):
     completed_at: Optional[str] = None
     ignition_point: GeoJSONPoint
     metrics: Optional[SimulationMetrics] = None
+    engine_version: Optional[str] = "spread-ca-v001"
+    completed_steps: Optional[int] = None
+    total_steps: Optional[int] = None
+    error_message: Optional[str] = None
 
 
 class SimulationTimestepItem(BaseModel):
@@ -66,7 +94,7 @@ class SimulationTimestepItem(BaseModel):
 
 
 class SimulationTimelineResponse(BaseModel):
-    """Full 12-hour progression metrics timeline."""
+    """Full progression metrics timeline."""
     simulation_id: str
     total_steps: int
     timeline: List[SimulationTimestepItem]
@@ -78,3 +106,10 @@ class SimulationTimestepDetailResponse(BaseModel):
     step_hour: int
     metrics: SimulationTimestepItem
     perimeter: GeoJSONFeature
+
+
+class SimulationStepsFeatureCollectionResponse(BaseModel):
+    """FeatureCollection of all simulation timestep boundaries."""
+    type: str = "FeatureCollection"
+    features: List[GeoJSONFeature]
+    properties: Optional[Dict[str, Any]] = None
