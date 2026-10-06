@@ -93,14 +93,22 @@ This roadmap governs the end-to-end development of the **Predictive Forest Fire 
 
 ---
 
-### Phase 7: 12-Hour Cellular Automata Spread Engine
+### Phase 7: 12-Hour Cellular Automata Spread Engine [COMPLETED]
 - **Objectives**: Implement physical/heuristic Cellular Automata fire spread simulation engine incorporating wind vectors, slope, aspect, and fuel types.
 - **Deliverables**:
-  - 2D grid matrix state representation (`UNBURNED`, `BURNING`, `BURNED`).
-  - Local propagation rules with wind vector amplification and uphill slope acceleration.
-  - Indian vegetation fuel model parameter calibration.
-  - Hourly timestep generator producing burned area (ha), velocity (km/h), and perimeter polygons.
-  - Initial hooks for Rothermel surface fire equations.
+  - Standalone Cellular Automata Engine: High-performance NumPy-backed 2D spatial grid representation (`UNBURNED`, `BURNING`, `BURNED`, `NON_BURNABLE`) in `services/spread-engine/`.
+  - Moore 8-Neighbourhood Dynamics: Clockwise directional offsets, spherical distance weighting ($1.0$ orthogonal, $1/\sqrt{2}$ diagonal), and boundary-safe neighbor evaluation.
+  - Directional Environmental Factors:
+    - Wind vector amplification downwind and retardation upwind with circular angle diff handling ($359^\circ \leftrightarrow 1^\circ$).
+    - Topographic slope uphill exponential acceleration and downhill retardation via Noble/McArthur scaling.
+    - Solar aspect insolation modulation for the Northern Hemisphere (peak heating on south-facing slopes ~180°).
+    - Indian forest fuel flammability classes (`CONIFER_HIGH_FLAMMABILITY` to `NON_BURNABLE_WATER`/`BARREN` with 0 combustibility).
+  - Double-Buffered Simultaneous Transitions: State updates and burning timer countdowns committed order-independently.
+  - Shapely Geometric Boundary Extraction: Dissolving active and burned cells into RFC 7946 GeoJSON Polygons / MultiPolygons.
+  - Hourly Timestep Metrics: Cumulative burned area (ha), spread velocity (km/h), centroid spread direction (deg), and radiative fire intensity (MW).
+  - Full Deterministic Reproducibility: Bit-for-bit identical outputs when executed with identical inputs.
+  - Standalone CLI & Programmatic API: `services.spread_engine.cli` supporting standalone execution and GeoJSON exports.
+  - Comprehensive Verification: 42 new unit, factor, boundary, and integration tests with 100% pass rate.
 
 ---
 

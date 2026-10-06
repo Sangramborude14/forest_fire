@@ -1,23 +1,23 @@
-"""Simulation timestep and complete result output contracts."""
+"""Typed output contracts and serialization schemas for simulation results."""
 
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 
 @dataclass
-class TimestepResult:
-    """Snapshot metrics and spatial boundary for a single simulation hour."""
+class SpreadTimestepSnapshot:
+    """Detailed hourly or sub-step state snapshot."""
     step_hour: int
     burned_area_ha: float
     spread_velocity_kmh: float
     spread_direction_deg: float
     intensity_mw: float
-    boundary_polygon: Dict[str, Any]  # GeoJSON Polygon or MultiPolygon
+    boundary_polygon: Dict[str, Any]  # GeoJSON Polygon / MultiPolygon
     active_burning_cells: int = 0
     total_burned_cells: int = 0
 
     def to_dict(self) -> Dict[str, Any]:
-        """Convert timestep to serializable dictionary."""
+        """Convert snapshot to standard dictionary representation."""
         return {
             "step_hour": self.step_hour,
             "burned_area_ha": self.burned_area_ha,
@@ -30,7 +30,7 @@ class TimestepResult:
         }
 
     def to_geojson_feature(self) -> Dict[str, Any]:
-        """Convert timestep perimeter to GeoJSON Feature."""
+        """Convert snapshot boundary to GeoJSON Feature with properties."""
         return {
             "type": "Feature",
             "properties": {
@@ -46,17 +46,29 @@ class TimestepResult:
 
 
 @dataclass
-class SimulationResult:
-    """Complete 12-hour simulation result container."""
+class SpreadSimulationSummary:
+    """Summary metrics of complete simulation run."""
     simulation_id: str
     total_area_burned_ha: float
     duration_hours: int
     peak_spread_velocity_kmh: float
-    timesteps: List[TimestepResult]
+    final_spread_direction_deg: float
+    timesteps_count: int
+    engine_version: str
+
+
+@dataclass
+class SpreadSimulationOutput:
+    """Container holding full simulation run and all hourly snapshots."""
+    simulation_id: str
+    total_area_burned_ha: float
+    duration_hours: int
+    peak_spread_velocity_kmh: float
+    timesteps: List[SpreadTimestepSnapshot]
     engine_version: str = "spread-ca-v001"
 
     def to_dict(self) -> Dict[str, Any]:
-        """Convert result container to serializable dictionary."""
+        """Convert simulation output to dictionary representation."""
         return {
             "simulation_id": self.simulation_id,
             "total_area_burned_ha": self.total_area_burned_ha,
@@ -67,7 +79,7 @@ class SimulationResult:
         }
 
     def to_geojson(self) -> Dict[str, Any]:
-        """Format as GeoJSON FeatureCollection of all timestep perimeters."""
+        """Format as GeoJSON FeatureCollection of timestep perimeters."""
         return {
             "type": "FeatureCollection",
             "properties": {

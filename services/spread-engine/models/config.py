@@ -1,6 +1,6 @@
 """Simulation configuration and input contracts."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, Optional
 
 
@@ -8,7 +8,7 @@ from typing import Any, Dict, Optional
 class EnvironmentalConditions:
     """Atmospheric conditions driving spread velocity and heading."""
     wind_speed_ms: float
-    wind_direction_deg: float  # 0 = North, 90 = East, 180 = South, 270 = West
+    wind_direction_deg: float  # Meteorological direction: 0 = North, 90 = East, 180 = South, 270 = West
     ambient_temperature_c: float = 30.0
     relative_humidity_pct: float = 25.0
 
@@ -25,3 +25,10 @@ class SimulationInput:
     grid_cols: int = 50
     environment: Optional[EnvironmentalConditions] = None
     use_physics_layer: bool = False
+    slope_deg: Optional[float] = None
+    aspect_deg: Optional[float] = None
+    fuel_type: Optional[str] = None
+    elevation_m: Optional[float] = None
+    custom_terrain_grid: Optional[Dict[str, Any]] = None
+    deterministic: bool = True
+    random_seed: Optional[int] = 42
