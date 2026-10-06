@@ -29,9 +29,11 @@ data/raw/*
 !data/raw/.gitkeep
 data/processed/*
 !data/processed/.gitkeep
-# Keep data/sample tracked for local testing, CI/CD, and reproducible pipelines
+# Keep sample data and models tracked for local testing, CI/CD, and reproducible pipelines
 models/risk/*
 !models/risk/.gitkeep
+!models/risk/risk-xgboost-v001
+!models/risk/risk-xgboost-v001/**
 models/spread/*
 !models/spread/.gitkeep
 postgres-data/

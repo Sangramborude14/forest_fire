@@ -58,14 +58,19 @@ This roadmap governs the end-to-end development of the **Predictive Forest Fire 
 
 ---
 
-### Phase 5: 24-Hour Fire Risk Machine Learning Model
-- **Objectives**: Develop, train, evaluate, and serialize baseline tabular/pixel-wise machine learning models for 24-hour fire susceptibility prediction.
+### Phase 5: 24-Hour Fire Risk Machine Learning Model [COMPLETED]
+- **Objectives**: Develop, train, evaluate, and serialize baseline tabular/pixel-wise machine learning models for 24-hour fire susceptibility prediction on the 500m × 500m canonical spatial grid without temporal leakage.
 - **Deliverables**:
-  - Historical training dataset compilation (2015-2025 burn scars across Western Ghats and Himalayas).
-  - Class imbalance handling (SMOTE / focal loss).
-  - Random Forest and XGBoost classifier pipelines.
-  - Evaluation reporting: Precision, Recall, F1-score, and ROC-AUC metrics.
-  - Model registry, versioning, and artifact serialization.
+  - Standalone Risk Engine Service (`services/risk-engine/`) completely decoupled from FastAPI/PostGIS/Celery.
+  - Strict Feature Contracts (`RiskFeatureSchema`, `FeatureSpec`, `RiskFeatureValidator`) enforcing physical bounds and rejecting non-finite anomalies across 20 numerical and 10 fuel categories.
+  - Temporal Splitter (`TemporalSplitter`) guaranteeing strict chronological separation ($\max(T_{\text{train}}) \le \min(T_{\text{val}})$) with zero future data leakage.
+  - Preprocessor (`FeaturePreprocessor`) with deterministic fuel one-hot matrix encoding and automatic cyclical/vector geometric feature derivation.
+  - Machine Learning Trainers: Native XGBoost (`XGBoostRiskTrainer`) with dynamic `scale_pos_weight` rare-event imbalance scaling, plus comparative Random Forest baseline (`RandomForestRiskTrainer`).
+  - Evaluation & Model Cards: Comprehensive metrics computation (`metrics.json`), human-readable Markdown evaluation report (`evaluation_report.md`), and complete production `MODEL_CARD.md`.
+  - Model Registry & Safe Serialization (`ModelRegistry`, `ModelArtifactSerializer`) using native `model.json` (no insecure pickles) and versioned tracking under `models/risk/<version>/`.
+  - High-Performance Inference (`ModelLoader`, `RiskPredictor`) supporting single-cell, batch, and vectorized DataFrame inference with standardized Pydantic contracts (`RiskPrediction`).
+  - Unified CLI (`python -m services.risk_engine.cli` with `train`, `evaluate`, `predict`, `info` subcommands).
+  - Test Suite: 30 new unit and integration tests across features, splits, trainers, evaluation, edge cases, and inference contracts (85/85 total monorepo tests passing).
 
 ---
 
