@@ -219,8 +219,9 @@ def run_train(
         json.dump(schema.model_dump(), f, indent=2)
 
     meta = {
-        "model_id": f"risk_engine_{model_version}",
+        "model_name": "risk-xgboost",
         "model_version": model_version,
+        "algorithm": "XGBoost + CalibratedClassifierCV",
         "model_type": "xgboost_calibrated",
         "description": "Calibrated 24-hour fire risk model trained on multi-season historical data (2022-2023) with isotonic calibration on 2024.",
         "author": "Wildfire Defense Operations & ML Team",
